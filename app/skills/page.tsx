@@ -3,8 +3,9 @@ import { redirect } from 'next/navigation';
 import { getSessionContext } from '@/lib/session';
 import { listCategories, listSkills } from '@/lib/db/skills';
 import { CATEGORY_LABELS } from '@/lib/types';
-import type { CategoryId, Skill, SkillCategory } from '@/lib/types';
+import type { CategoryId, Difficulty, Skill, SkillCategory } from '@/lib/types';
 import { DifficultyBadge } from './_components/Difficulty';
+import { FilterBar } from './_components/FilterBar';
 
 const ALL_CATEGORY_IDS: CategoryId[] = [
   'barre',
@@ -19,6 +20,13 @@ const MAX_CARD_TAGS = 3;
 
 function isCategoryId(value: string | undefined): value is CategoryId {
   return typeof value === 'string' && (ALL_CATEGORY_IDS as string[]).includes(value);
+}
+
+function parseDifficulty(value: string | undefined): Difficulty | null {
+  if (!value) return null;
+  const n = Number.parseInt(value, 10);
+  if (n >= 1 && n <= 5) return n as Difficulty;
+  return null;
 }
 
 function firstParam(value: string | string[] | undefined): string | undefined {
@@ -86,14 +94,24 @@ export default async function SkillsPage(props: SkillsPageProps) {
   const activeCat: CategoryId | null = isCategoryId(catParam) ? catParam : null;
   const qRaw = firstParam(sp.q) ?? '';
   const q = qRaw.trim().toLowerCase();
+  const activeDiff = parseDifficulty(firstParam(sp.diff));
+  const trainRaw = firstParam(sp.train)?.trim() ?? '';
+  const activeTrain = trainRaw.length > 0 ? trainRaw : null;
 
   const [categories, skills] = await Promise.all([listCategories(), listSkills(userId)]);
+
+  // Unique "trains" tags across the user's skill catalog, sorted, for the filter dropdown.
+  const trainOptions = Array.from(
+    new Set(skills.flatMap((s) => s.trains)),
+  ).sort((a, b) => a.localeCompare(b));
 
   // Filter
   const filtered = skills.filter((s) => {
     if (activeCat && s.categoryId !== activeCat) return false;
+    if (activeDiff && s.difficulty !== activeDiff) return false;
+    if (activeTrain && !s.trains.includes(activeTrain)) return false;
     if (q.length > 0) {
-      const haystack = `${s.name} ${s.description ?? ''}`.toLowerCase();
+      const haystack = `${s.name} ${s.description ?? ''} ${s.trains.join(' ')}`.toLowerCase();
       if (!haystack.includes(q)) return false;
     }
     return true;
@@ -117,32 +135,24 @@ export default async function SkillsPage(props: SkillsPageProps) {
         </p>
       </header>
 
-      <form
-        method="get"
-        action="/skills"
-        className="flex flex-col gap-3"
-        role="search"
-      >
-        {activeCat ? <input type="hidden" name="cat" value={activeCat} /> : null}
-        <input
-          type="search"
-          name="q"
-          defaultValue={qRaw}
-          placeholder="Search skills…"
-          className="w-full rounded-full border border-violet-200 bg-white px-4 py-2 text-sm shadow-sm outline-none placeholder:text-violet-900/40 focus:border-violet-400"
-        />
-      </form>
+      <FilterBar
+        q={qRaw}
+        cat={activeCat}
+        diff={activeDiff}
+        train={activeTrain}
+        trainOptions={trainOptions}
+      />
 
       <nav aria-label="Filter by category" className="flex flex-wrap gap-2">
         <CategoryChip
-          href={buildHref(null, qRaw)}
+          href={buildHref({ cat: null, q: qRaw, diff: activeDiff, train: activeTrain })}
           label="All"
           active={activeCat === null}
         />
         {categories.map((c) => (
           <CategoryChip
             key={c.id}
-            href={buildHref(c.id, qRaw)}
+            href={buildHref({ cat: c.id, q: qRaw, diff: activeDiff, train: activeTrain })}
             label={c.name}
             color={c.brandColorHex}
             active={activeCat === c.id}
@@ -167,10 +177,22 @@ export default async function SkillsPage(props: SkillsPageProps) {
   );
 }
 
-function buildHref(cat: CategoryId | null, q: string): string {
+function buildHref({
+  cat,
+  q,
+  diff,
+  train,
+}: {
+  cat: CategoryId | null;
+  q: string;
+  diff: Difficulty | null;
+  train: string | null;
+}): string {
   const params = new URLSearchParams();
   if (cat) params.set('cat', cat);
   if (q.length > 0) params.set('q', q);
+  if (diff) params.set('diff', String(diff));
+  if (train) params.set('train', train);
   const qs = params.toString();
   return qs.length > 0 ? `/skills?${qs}` : '/skills';
 }
