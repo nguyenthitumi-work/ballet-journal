@@ -3,40 +3,16 @@ import { redirect } from 'next/navigation';
 import { getSessionContext } from '@/lib/session';
 import { getSkill, listCategories } from '@/lib/db/skills';
 import { CATEGORY_LABELS } from '@/lib/types';
+import { DifficultyBadge } from '../_components/Difficulty';
 import { FocusToggle } from '../_components/FocusToggle';
 import { humanizeLastAttempted } from '../_components/lastAttempted';
 import { PronounceButton } from '../_components/PronounceButton';
 import { ReferenceVideo } from '../_components/ReferenceVideo';
 
-const MAX_DIFFICULTY = 5;
 const SECONDS_PER_MINUTE = 60;
 
 interface SkillDetailPageProps {
   params: Promise<{ id: string }>;
-}
-
-function DifficultyDots({ value }: { value: number }) {
-  const filled = Math.max(0, Math.min(MAX_DIFFICULTY, value));
-  const dots: React.ReactElement[] = [];
-  for (let i = 0; i < MAX_DIFFICULTY; i += 1) {
-    dots.push(
-      <span
-        key={i}
-        aria-hidden
-        className={i < filled ? 'text-violet-600' : 'text-violet-200'}
-      >
-        ●
-      </span>,
-    );
-  }
-  return (
-    <span
-      className="inline-flex gap-0.5 text-sm leading-none"
-      aria-label={`Difficulty ${filled} of ${MAX_DIFFICULTY}`}
-    >
-      {dots}
-    </span>
-  );
 }
 
 function humanizeDuration(totalSeconds: number): string {
@@ -120,9 +96,9 @@ export default async function SkillDetailPage(props: SkillDetailPageProps) {
           <h1 className="text-xl font-semibold tracking-tight text-violet-900">{skill.name}</h1>
           <PronounceButton text={skill.name} />
         </div>
-        <div className="flex items-center gap-2 text-sm text-violet-900/70">
-          <DifficultyDots value={skill.difficulty} />
-          <span>·</span>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-violet-900/70">
+          <DifficultyBadge value={skill.difficulty} size="md" />
+          <span aria-hidden>·</span>
           <span>{humanizeDuration(skill.defaultDurationSeconds)}</span>
         </div>
       </header>
@@ -134,6 +110,22 @@ export default async function SkillDetailPage(props: SkillDetailPageProps) {
         skillName={skill.name}
         referenceUrl={skill.referenceUrl}
       />
+
+      {skill.trains.length > 0 ? (
+        <div className="rounded-2xl border border-violet-200 bg-white p-5 shadow-sm">
+          <h2 className="text-sm font-medium text-violet-900/70">Trains</h2>
+          <ul className="mt-2 flex flex-wrap gap-2">
+            {skill.trains.map((tag) => (
+              <li
+                key={tag}
+                className="rounded-full bg-violet-50 px-3 py-1 text-sm font-medium text-violet-700"
+              >
+                {tag}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       {skill.description ? (
         <div className="rounded-2xl border border-violet-200 bg-white p-5 shadow-sm">

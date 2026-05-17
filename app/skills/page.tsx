@@ -4,6 +4,7 @@ import { getSessionContext } from '@/lib/session';
 import { listCategories, listSkills } from '@/lib/db/skills';
 import { CATEGORY_LABELS } from '@/lib/types';
 import type { CategoryId, Skill, SkillCategory } from '@/lib/types';
+import { DifficultyBadge } from './_components/Difficulty';
 
 const ALL_CATEGORY_IDS: CategoryId[] = [
   'barre',
@@ -14,7 +15,7 @@ const ALL_CATEGORY_IDS: CategoryId[] = [
   'conditioning',
 ];
 
-const MAX_DIFFICULTY = 5;
+const MAX_CARD_TAGS = 3;
 
 function isCategoryId(value: string | undefined): value is CategoryId {
   return typeof value === 'string' && (ALL_CATEGORY_IDS as string[]).includes(value);
@@ -23,30 +24,6 @@ function isCategoryId(value: string | undefined): value is CategoryId {
 function firstParam(value: string | string[] | undefined): string | undefined {
   if (Array.isArray(value)) return value[0];
   return value;
-}
-
-function DifficultyDots({ value }: { value: number }) {
-  const filled = Math.max(0, Math.min(MAX_DIFFICULTY, value));
-  const dots: React.ReactElement[] = [];
-  for (let i = 0; i < MAX_DIFFICULTY; i += 1) {
-    dots.push(
-      <span
-        key={i}
-        aria-hidden
-        className={i < filled ? 'text-violet-600' : 'text-violet-200'}
-      >
-        ●
-      </span>,
-    );
-  }
-  return (
-    <span
-      className="inline-flex gap-0.5 text-xs leading-none"
-      aria-label={`Difficulty ${filled} of ${MAX_DIFFICULTY}`}
-    >
-      {dots}
-    </span>
-  );
 }
 
 function SkillCard({ skill }: { skill: Skill }) {
@@ -73,8 +50,25 @@ function SkillCard({ skill }: { skill: Skill }) {
         <p className="mt-1 line-clamp-1 text-sm text-violet-900/70">{skill.description}</p>
       ) : null}
       <div className="mt-3">
-        <DifficultyDots value={skill.difficulty} />
+        <DifficultyBadge value={skill.difficulty} />
       </div>
+      {skill.trains.length > 0 ? (
+        <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Trains">
+          {skill.trains.slice(0, MAX_CARD_TAGS).map((tag) => (
+            <li
+              key={tag}
+              className="rounded-full bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700"
+            >
+              {tag}
+            </li>
+          ))}
+          {skill.trains.length > MAX_CARD_TAGS ? (
+            <li className="rounded-full px-2 py-0.5 text-xs text-violet-900/60">
+              +{skill.trains.length - MAX_CARD_TAGS}
+            </li>
+          ) : null}
+        </ul>
+      ) : null}
     </Link>
   );
 }
