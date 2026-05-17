@@ -36,8 +36,8 @@ export function FocusToggle({ skillId, initial }: FocusToggleProps) {
       aria-pressed={focused}
       className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium shadow-sm transition disabled:opacity-60 ${
         focused
-          ? 'bg-pink-600 text-white hover:bg-pink-700'
-          : 'border border-pink-300 bg-white text-pink-700 hover:border-pink-500 hover:text-pink-800'
+          ? 'bg-violet-600 text-white hover:bg-violet-700'
+          : 'border border-violet-300 bg-white text-violet-700 hover:border-violet-500 hover:text-violet-800'
       }`}
     >
       <span aria-hidden className="text-base leading-none">

@@ -16,7 +16,7 @@ const LEVEL_HINTS: Record<Level, string> = {
 };
 
 const inputClass =
-  'w-full rounded-lg border border-pink-200 px-3 py-2 focus:border-pink-500 focus:outline-none';
+  'w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:outline-none';
 
 interface Props {
   initialProfile: UserProfile;
@@ -72,7 +72,7 @@ export default function ProfileForm({ initialProfile }: Props) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
       <div>
-        <label htmlFor="name" className="text-sm font-medium text-pink-900">
+        <label htmlFor="name" className="text-sm font-medium text-violet-900">
           Name
         </label>
         <input
@@ -93,7 +93,7 @@ export default function ProfileForm({ initialProfile }: Props) {
       </div>
 
       <div>
-        <label htmlFor="age" className="text-sm font-medium text-pink-900">
+        <label htmlFor="age" className="text-sm font-medium text-violet-900">
           Age
         </label>
         <input
@@ -117,14 +117,14 @@ export default function ProfileForm({ initialProfile }: Props) {
       </div>
 
       <fieldset className="flex flex-col gap-2">
-        <legend className="text-sm font-medium text-pink-900">Level</legend>
+        <legend className="text-sm font-medium text-violet-900">Level</legend>
         {LEVELS.map((lvl) => (
           <label
             key={lvl}
             className={`flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2 transition ${
               level === lvl
-                ? 'border-pink-500 bg-pink-50'
-                : 'border-pink-200 hover:border-pink-400'
+                ? 'border-violet-500 bg-violet-50'
+                : 'border-violet-200 hover:border-violet-400'
             }`}
           >
             <input
@@ -137,12 +137,12 @@ export default function ProfileForm({ initialProfile }: Props) {
                 setSaved(false);
               }}
               disabled={isPending}
-              className="mt-1 accent-pink-600"
+              className="mt-1 accent-violet-600"
               required
             />
             <span className="flex flex-col">
               <span className="font-medium">{lvl}</span>
-              <span className="text-sm text-pink-900/70">{LEVEL_HINTS[lvl]}</span>
+              <span className="text-sm text-violet-900/70">{LEVEL_HINTS[lvl]}</span>
             </span>
           </label>
         ))}
@@ -159,14 +159,14 @@ export default function ProfileForm({ initialProfile }: Props) {
 
       <div className="flex items-center justify-end gap-3">
         {saved && !isPending ? (
-          <span className="text-sm text-pink-700" role="status">
+          <span className="text-sm text-violet-700" role="status">
             Saved!
           </span>
         ) : null}
         <button
           type="submit"
           disabled={isPending}
-          className="rounded-full bg-pink-600 px-6 py-2.5 text-white hover:bg-pink-700 disabled:opacity-50"
+          className="rounded-full bg-violet-600 px-6 py-2.5 text-white hover:bg-violet-700 disabled:opacity-50"
         >
           {isPending ? 'Saving…' : 'Save changes'}
         </button>

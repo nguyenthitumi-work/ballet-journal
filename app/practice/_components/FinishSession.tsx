@@ -15,9 +15,9 @@ const MOODS: { value: 1 | 2 | 3 | 4 | 5; emoji: string; label: string }[] = [
   { value: 5, emoji: '🤩', label: 'Amazing' },
 ];
 
-const CARD_CLASS = 'rounded-2xl border border-pink-200 bg-white p-6 shadow-sm';
+const CARD_CLASS = 'rounded-2xl border border-violet-200 bg-white p-6 shadow-sm';
 const PRIMARY_BTN_CLASS =
-  'rounded-full bg-pink-600 px-6 py-3 font-medium text-white hover:bg-pink-700 disabled:opacity-50';
+  'rounded-full bg-violet-600 px-6 py-3 font-medium text-white hover:bg-violet-700 disabled:opacity-50';
 
 export default function FinishSession({ sessionId }: Props) {
   const [mood, setMood] = useState<1 | 2 | 3 | 4 | 5 | null>(null);
@@ -48,7 +48,7 @@ export default function FinishSession({ sessionId }: Props) {
     <div className="flex flex-col gap-6">
       <div className={`${CARD_CLASS} flex flex-col gap-4`}>
         <fieldset>
-          <legend className="text-sm font-medium text-pink-900/70">
+          <legend className="text-sm font-medium text-violet-900/70">
             How do you feel overall?
           </legend>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -62,10 +62,10 @@ export default function FinishSession({ sessionId }: Props) {
                   disabled={isPending}
                   aria-pressed={selected}
                   aria-label={m.label}
-                  className={`flex flex-col items-center gap-1 rounded-full border px-4 py-2 transition focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-50 ${
+                  className={`flex flex-col items-center gap-1 rounded-full border px-4 py-2 transition focus:outline-none focus:ring-2 focus:ring-violet-300 disabled:opacity-50 ${
                     selected
-                      ? 'border-pink-500 bg-pink-100 text-pink-900'
-                      : 'border-pink-200 bg-white text-pink-900/80 hover:border-pink-400'
+                      ? 'border-violet-500 bg-violet-100 text-violet-900'
+                      : 'border-violet-200 bg-white text-violet-900/80 hover:border-violet-400'
                   }`}
                 >
                   <span className="text-2xl" aria-hidden>
@@ -79,7 +79,7 @@ export default function FinishSession({ sessionId }: Props) {
         </fieldset>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="overall-notes" className="text-sm font-medium text-pink-900/70">
+          <label htmlFor="overall-notes" className="text-sm font-medium text-violet-900/70">
             Anything to remember? (optional)
           </label>
           <textarea
@@ -89,7 +89,7 @@ export default function FinishSession({ sessionId }: Props) {
             placeholder="Wins, things to try next time…"
             rows={3}
             disabled={isPending}
-            className="w-full rounded-lg border border-pink-200 px-3 py-2 focus:border-pink-500 focus:outline-none"
+            className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:outline-none"
           />
         </div>
       </div>

@@ -13,7 +13,7 @@ import type { Skill } from '@/lib/types';
 import PracticeLoop from '../_components/PracticeLoop';
 import FinishSession from '../_components/FinishSession';
 
-const CARD_CLASS = 'rounded-2xl border border-pink-200 bg-white p-6 shadow-sm';
+const CARD_CLASS = 'rounded-2xl border border-violet-200 bg-white p-6 shadow-sm';
 
 async function resolveSkillOrder(
   userId: string,
@@ -54,9 +54,9 @@ export default async function PracticeSessionPage(props: {
       <section className="flex flex-col gap-4">
         <div className={CARD_CLASS}>
           <h1 className="text-xl font-medium">We couldn&apos;t find that practice.</h1>
-          <p className="mt-2 text-pink-900/70">It may have been deleted.</p>
+          <p className="mt-2 text-violet-900/70">It may have been deleted.</p>
         </div>
-        <Link href="/practice" className="text-sm text-pink-700 hover:underline">
+        <Link href="/practice" className="text-sm text-violet-700 hover:underline">
           ← Back to practice
         </Link>
       </section>
@@ -68,11 +68,11 @@ export default async function PracticeSessionPage(props: {
       <section className="flex flex-col gap-4">
         <div className={CARD_CLASS}>
           <h1 className="text-xl font-medium">This session is finished.</h1>
-          <p className="mt-2 text-pink-900/70">Nice work — it&apos;s saved to your history.</p>
+          <p className="mt-2 text-violet-900/70">Nice work — it&apos;s saved to your history.</p>
         </div>
         <Link
           href="/history"
-          className="rounded-full bg-pink-600 px-6 py-3 text-center font-medium text-white hover:bg-pink-700"
+          className="rounded-full bg-violet-600 px-6 py-3 text-center font-medium text-white hover:bg-violet-700"
         >
           View history
         </Link>
@@ -89,14 +89,14 @@ export default async function PracticeSessionPage(props: {
       <section className="flex flex-col gap-4">
         <div className={CARD_CLASS}>
           <h1 className="text-xl font-medium">Nothing to practice yet.</h1>
-          <p className="mt-2 text-pink-900/70">
+          <p className="mt-2 text-violet-900/70">
             Add a few skills first, then come back to start a practice.
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Link
             href="/skills"
-            className="rounded-full bg-pink-600 px-6 py-3 text-center font-medium text-white hover:bg-pink-700"
+            className="rounded-full bg-violet-600 px-6 py-3 text-center font-medium text-white hover:bg-violet-700"
           >
             Browse skills
           </Link>
@@ -112,11 +112,11 @@ export default async function PracticeSessionPage(props: {
     return (
       <section className="flex flex-col gap-6">
         <header>
-          <p className="text-sm text-pink-900/60">All done!</p>
+          <p className="text-sm text-violet-900/60">All done!</p>
           <h1 className="text-3xl font-semibold tracking-tight">How did it feel?</h1>
         </header>
         <div className={CARD_CLASS}>
-          <p className="text-pink-900/80">
+          <p className="text-violet-900/80">
             You finished {attempts.length} {attempts.length === 1 ? 'skill' : 'skills'}. Rate your
             mood and add any notes before wrapping up.
           </p>
@@ -132,7 +132,7 @@ export default async function PracticeSessionPage(props: {
       <section className="flex flex-col gap-4">
         <div className={CARD_CLASS}>
           <h1 className="text-xl font-medium">Skill not found.</h1>
-          <p className="mt-2 text-pink-900/70">
+          <p className="mt-2 text-violet-900/70">
             We couldn&apos;t load the next skill. You can wrap up this session and try again.
           </p>
         </div>

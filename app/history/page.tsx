@@ -39,20 +39,20 @@ export default async function HistoryPage() {
     <section className="flex flex-col gap-6">
       <header>
         <h1 className="text-3xl font-semibold tracking-tight">History</h1>
-        <p className="text-sm text-pink-900/60">Every practice, big or small.</p>
+        <p className="text-sm text-violet-900/60">Every practice, big or small.</p>
       </header>
 
       <StreakBanner profile={profile} />
 
       {sessions.length === 0 ? (
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-pink-200 bg-white p-8 text-center shadow-sm">
-          <p className="text-lg font-medium text-pink-950">No practices yet.</p>
-          <p className="max-w-sm text-pink-900/70">
+        <div className="flex flex-col items-center gap-4 rounded-2xl border border-violet-200 bg-white p-8 text-center shadow-sm">
+          <p className="text-lg font-medium text-violet-950">No practices yet.</p>
+          <p className="max-w-sm text-violet-900/70">
             Your first session will show up here as soon as you finish it.
           </p>
           <Link
             href="/practice"
-            className="rounded-full bg-pink-600 px-6 py-2.5 font-medium text-white shadow-sm transition hover:bg-pink-700"
+            className="rounded-full bg-violet-600 px-6 py-2.5 font-medium text-white shadow-sm transition hover:bg-violet-700"
           >
             Start practice
           </Link>

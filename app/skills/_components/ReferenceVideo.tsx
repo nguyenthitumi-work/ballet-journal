@@ -12,14 +12,14 @@ export function ReferenceVideo({ skillId, skillName, referenceUrl }: Props) {
   const searchUrl = youtubeSearchUrl(skillName);
 
   return (
-    <div className="rounded-2xl border border-pink-200 bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-violet-200 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-medium text-pink-900/70">Reference video</h2>
+        <h2 className="text-sm font-medium text-violet-900/70">Reference video</h2>
         <a
           href={searchUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs font-medium text-pink-700 underline-offset-2 hover:underline"
+          className="text-xs font-medium text-violet-700 underline-offset-2 hover:underline"
         >
           Search YouTube ↗
         </a>
@@ -38,13 +38,13 @@ export function ReferenceVideo({ skillId, skillName, referenceUrl }: Props) {
           />
         </div>
       ) : (
-        <p className="mt-3 text-sm text-pink-900/60">
+        <p className="mt-3 text-sm text-violet-900/60">
           No reference video set yet. A grown-up can paste a YouTube link below to add one.
         </p>
       )}
 
       <details className="mt-4 group">
-        <summary className="cursor-pointer text-xs font-medium text-pink-700 hover:text-pink-900">
+        <summary className="cursor-pointer text-xs font-medium text-violet-700 hover:text-violet-900">
           {referenceUrl ? 'Change link' : 'Add a YouTube link'}
         </summary>
         <div className="mt-3">

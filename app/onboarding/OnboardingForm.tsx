@@ -22,7 +22,7 @@ interface Props {
 }
 
 const inputClass =
-  'w-full rounded-lg border border-pink-200 px-3 py-2 focus:border-pink-500 focus:outline-none';
+  'w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:outline-none';
 
 export default function OnboardingForm({ initialName, initialAge, initialLevel }: Props) {
   const [name, setName] = useState<string>(initialName);
@@ -75,9 +75,9 @@ export default function OnboardingForm({ initialName, initialAge, initialLevel }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6" noValidate>
-      <section className="rounded-2xl border border-pink-200 bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border border-violet-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-medium">Hi! What should we call you?</h2>
-        <p className="mt-1 text-sm text-pink-900/70">Your first name is perfect.</p>
+        <p className="mt-1 text-sm text-violet-900/70">Your first name is perfect.</p>
         <label htmlFor="name" className="sr-only">
           Name
         </label>
@@ -95,9 +95,9 @@ export default function OnboardingForm({ initialName, initialAge, initialLevel }
         />
       </section>
 
-      <section className="rounded-2xl border border-pink-200 bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border border-violet-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-medium">How old are you?</h2>
-        <p className="mt-1 text-sm text-pink-900/70">So we can pick the right skills for you.</p>
+        <p className="mt-1 text-sm text-violet-900/70">So we can pick the right skills for you.</p>
         <label htmlFor="age" className="sr-only">
           Age
         </label>
@@ -120,9 +120,9 @@ export default function OnboardingForm({ initialName, initialAge, initialLevel }
         />
       </section>
 
-      <section className="rounded-2xl border border-pink-200 bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border border-violet-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-medium">What level are you dancing at?</h2>
-        <p className="mt-1 text-sm text-pink-900/70">Don&apos;t worry — you can change this later.</p>
+        <p className="mt-1 text-sm text-violet-900/70">Don&apos;t worry — you can change this later.</p>
         <fieldset className="mt-4 flex flex-col gap-2">
           <legend className="sr-only">Level</legend>
           {LEVELS.map((lvl) => (
@@ -130,8 +130,8 @@ export default function OnboardingForm({ initialName, initialAge, initialLevel }
               key={lvl}
               className={`flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2 transition ${
                 level === lvl
-                  ? 'border-pink-500 bg-pink-50'
-                  : 'border-pink-200 hover:border-pink-400'
+                  ? 'border-violet-500 bg-violet-50'
+                  : 'border-violet-200 hover:border-violet-400'
               }`}
             >
               <input
@@ -141,12 +141,12 @@ export default function OnboardingForm({ initialName, initialAge, initialLevel }
                 checked={level === lvl}
                 onChange={() => setLevel(lvl)}
                 disabled={isPending}
-                className="mt-1 accent-pink-600"
+                className="mt-1 accent-violet-600"
                 required
               />
               <span className="flex flex-col">
                 <span className="font-medium">{lvl}</span>
-                <span className="text-sm text-pink-900/70">{LEVEL_HINTS[lvl]}</span>
+                <span className="text-sm text-violet-900/70">{LEVEL_HINTS[lvl]}</span>
               </span>
             </label>
           ))}
@@ -166,7 +166,7 @@ export default function OnboardingForm({ initialName, initialAge, initialLevel }
         <button
           type="submit"
           disabled={isPending}
-          className="rounded-full bg-pink-600 px-6 py-2.5 font-medium text-white hover:bg-pink-700 disabled:opacity-50"
+          className="rounded-full bg-violet-600 px-6 py-2.5 font-medium text-white hover:bg-violet-700 disabled:opacity-50"
         >
           {isPending ? 'Saving…' : 'All set!'}
         </button>

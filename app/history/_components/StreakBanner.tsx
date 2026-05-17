@@ -16,15 +16,15 @@ export function StreakBanner({ profile }: Props) {
   const message = getStreakMessage(streak);
 
   return (
-    <section className="rounded-2xl border border-pink-200 bg-gradient-to-br from-pink-100 to-pink-50 p-6 shadow-sm">
-      <p className="text-sm font-medium uppercase tracking-wide text-pink-900/60">Streak</p>
-      <p className="mt-1 text-5xl font-semibold tracking-tight text-pink-950">
+    <section className="rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-100 to-violet-50 p-6 shadow-sm">
+      <p className="text-sm font-medium uppercase tracking-wide text-violet-900/60">Streak</p>
+      <p className="mt-1 text-5xl font-semibold tracking-tight text-violet-950">
         {streak}{' '}
-        <span className="text-2xl font-medium text-pink-900/70">
+        <span className="text-2xl font-medium text-violet-900/70">
           {streak === 1 ? 'day' : 'days'}
         </span>
       </p>
-      <p className="mt-2 text-pink-900/80">{message}</p>
+      <p className="mt-2 text-violet-900/80">{message}</p>
     </section>
   );
 }

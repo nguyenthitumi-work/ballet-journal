@@ -15,11 +15,11 @@ interface NavBarProps {
 
 export function NavBar({ email }: NavBarProps) {
   return (
-    <nav className="sticky bottom-0 z-10 border-t border-pink-100 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 sm:top-0 sm:bottom-auto sm:border-t-0 sm:border-b">
+    <nav className="sticky bottom-0 z-10 border-t border-violet-100 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 sm:top-0 sm:bottom-auto sm:border-t-0 sm:border-b">
       <div className="mx-auto flex max-w-3xl items-center justify-around px-2 py-2 sm:justify-between sm:py-3">
         <Link
           href="/"
-          className="hidden text-lg font-semibold tracking-tight text-pink-700 sm:block"
+          className="hidden text-lg font-semibold tracking-tight text-violet-700 sm:block"
         >
           Ballet Journal
         </Link>
@@ -28,7 +28,7 @@ export function NavBar({ email }: NavBarProps) {
             <li key={t.href}>
               <Link
                 href={t.href}
-                className="rounded-md px-3 py-1.5 text-sm font-medium text-pink-900/80 transition hover:bg-pink-50 hover:text-pink-700"
+                className="rounded-md px-3 py-1.5 text-sm font-medium text-violet-900/80 transition hover:bg-violet-50 hover:text-violet-700"
               >
                 {t.label}
               </Link>
@@ -39,7 +39,7 @@ export function NavBar({ email }: NavBarProps) {
               <form action={signOut}>
                 <button
                   type="submit"
-                  className="rounded-md px-3 py-1.5 text-sm font-medium text-pink-900/60 transition hover:bg-pink-50 hover:text-pink-700"
+                  className="rounded-md px-3 py-1.5 text-sm font-medium text-violet-900/60 transition hover:bg-violet-50 hover:text-violet-700"
                   title={`Signed in as ${email}`}
                 >
                   Sign out

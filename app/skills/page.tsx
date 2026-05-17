@@ -33,7 +33,7 @@ function DifficultyDots({ value }: { value: number }) {
       <span
         key={i}
         aria-hidden
-        className={i < filled ? 'text-pink-600' : 'text-pink-200'}
+        className={i < filled ? 'text-violet-600' : 'text-violet-200'}
       >
         ●
       </span>,
@@ -53,24 +53,24 @@ function SkillCard({ skill }: { skill: Skill }) {
   return (
     <Link
       href={`/skills/${skill.id}`}
-      className="block rounded-2xl border border-pink-200 bg-white p-5 shadow-sm transition hover:border-pink-400"
+      className="block rounded-2xl border border-violet-200 bg-white p-5 shadow-sm transition hover:border-violet-400"
     >
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-base font-semibold tracking-tight text-pink-900">
+        <h3 className="text-base font-semibold tracking-tight text-violet-900">
           {skill.name}
         </h3>
         {skill.isCurrentlyWorkingOn ? (
           <span
             aria-label="You're working on this"
             title="You're working on this"
-            className="text-lg leading-none text-pink-600"
+            className="text-lg leading-none text-violet-600"
           >
             ♥
           </span>
         ) : null}
       </div>
       {skill.description ? (
-        <p className="mt-1 line-clamp-1 text-sm text-pink-900/70">{skill.description}</p>
+        <p className="mt-1 line-clamp-1 text-sm text-violet-900/70">{skill.description}</p>
       ) : null}
       <div className="mt-3">
         <DifficultyDots value={skill.difficulty} />
@@ -117,8 +117,8 @@ export default async function SkillsPage(props: SkillsPageProps) {
   return (
     <section className="flex flex-col gap-6">
       <header className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold tracking-tight text-pink-900">Skills</h1>
-        <p className="text-sm text-pink-900/70">
+        <h1 className="text-xl font-semibold tracking-tight text-violet-900">Skills</h1>
+        <p className="text-sm text-violet-900/70">
           Pick something to learn, practice, or just peek at.
         </p>
       </header>
@@ -135,7 +135,7 @@ export default async function SkillsPage(props: SkillsPageProps) {
           name="q"
           defaultValue={qRaw}
           placeholder="Search skills…"
-          className="w-full rounded-full border border-pink-200 bg-white px-4 py-2 text-sm shadow-sm outline-none placeholder:text-pink-900/40 focus:border-pink-400"
+          className="w-full rounded-full border border-violet-200 bg-white px-4 py-2 text-sm shadow-sm outline-none placeholder:text-violet-900/40 focus:border-violet-400"
         />
       </form>
 
@@ -157,7 +157,7 @@ export default async function SkillsPage(props: SkillsPageProps) {
       </nav>
 
       {filtered.length === 0 ? (
-        <p className="rounded-2xl border border-pink-200 bg-white p-5 text-sm text-pink-900/70 shadow-sm">
+        <p className="rounded-2xl border border-violet-200 bg-white p-5 text-sm text-violet-900/70 shadow-sm">
           No skills match that filter. Try clearing the search.
         </p>
       ) : (
@@ -197,8 +197,8 @@ function CategoryChip({
       href={href}
       className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition ${
         active
-          ? 'bg-pink-600 text-white shadow-sm'
-          : 'border border-pink-200 bg-white text-pink-700 hover:border-pink-400'
+          ? 'bg-violet-600 text-white shadow-sm'
+          : 'border border-violet-200 bg-white text-violet-700 hover:border-violet-400'
       }`}
       aria-current={active ? 'page' : undefined}
     >
@@ -230,8 +230,8 @@ function CategorySection({
           className="inline-block h-3 w-3 rounded-full"
           style={{ backgroundColor: category.brandColorHex }}
         />
-        <h2 className="text-xl font-semibold tracking-tight text-pink-900">{label}</h2>
-        <span className="text-xs text-pink-900/60">
+        <h2 className="text-xl font-semibold tracking-tight text-violet-900">{label}</h2>
+        <span className="text-xs text-violet-900/60">
           {skills.length} {skills.length === 1 ? 'skill' : 'skills'}
         </span>
       </div>

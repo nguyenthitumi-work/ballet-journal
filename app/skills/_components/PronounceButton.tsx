@@ -52,8 +52,8 @@ export function PronounceButton({ text, lang = 'fr-FR' }: PronounceButtonProps) 
       onClick={handleClick}
       aria-label={`Hear ${text} pronounced`}
       title={`Hear ${text} pronounced`}
-      className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-pink-300 bg-white text-pink-700 shadow-sm transition hover:border-pink-500 hover:text-pink-800 ${
-        speaking ? 'animate-pulse border-pink-500 text-pink-800' : ''
+      className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-violet-300 bg-white text-violet-700 shadow-sm transition hover:border-violet-500 hover:text-violet-800 ${
+        speaking ? 'animate-pulse border-violet-500 text-violet-800' : ''
       }`}
     >
       <span aria-hidden className="text-base leading-none">

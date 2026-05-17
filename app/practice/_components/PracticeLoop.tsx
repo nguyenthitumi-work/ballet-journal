@@ -30,9 +30,9 @@ const RATINGS: { value: 1 | 2 | 3 | 4 | 5; label: string }[] = [
   { value: 5, label: 'Great' },
 ];
 
-const CARD_CLASS = 'rounded-2xl border border-pink-200 bg-white p-6 shadow-sm';
+const CARD_CLASS = 'rounded-2xl border border-violet-200 bg-white p-6 shadow-sm';
 const PRIMARY_BTN_CLASS =
-  'rounded-full bg-pink-600 px-6 py-3 font-medium text-white hover:bg-pink-700 disabled:opacity-50';
+  'rounded-full bg-violet-600 px-6 py-3 font-medium text-white hover:bg-violet-700 disabled:opacity-50';
 
 function formatMmSs(totalSeconds: number): string {
   const m = Math.floor(totalSeconds / 60);
@@ -101,7 +101,7 @@ export default function PracticeLoop({
 
   return (
     <section className="flex flex-col gap-6">
-      <header className="flex items-center justify-between text-sm text-pink-900/70">
+      <header className="flex items-center justify-between text-sm text-violet-900/70">
         <span>{progressLabel}</span>
         <span aria-live="polite" className="font-mono">
           {formatMmSs(seconds)}
@@ -111,13 +111,13 @@ export default function PracticeLoop({
       <div className={`${CARD_CLASS} flex flex-col gap-4`}>
         <div className="flex flex-wrap items-start justify-between gap-2">
           <h1 className="text-3xl font-semibold tracking-tight">{currentSkill.name}</h1>
-          <span className="rounded-full bg-pink-100 px-3 py-1 text-xs font-medium text-pink-700">
+          <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-medium text-violet-700">
             {currentSkill.categoryLabel}
           </span>
         </div>
 
         {currentSkill.description ? (
-          <p className="text-pink-900/80">{currentSkill.description}</p>
+          <p className="text-violet-900/80">{currentSkill.description}</p>
         ) : null}
 
         {currentSkill.techniqueTips.length > 0 ? (
@@ -125,13 +125,13 @@ export default function PracticeLoop({
             <button
               type="button"
               onClick={() => setTipsOpen((v) => !v)}
-              className="text-sm font-medium text-pink-700 hover:underline"
+              className="text-sm font-medium text-violet-700 hover:underline"
               aria-expanded={tipsOpen}
             >
               {tipsOpen ? 'Hide technique tips' : 'Show technique tips'}
             </button>
             {tipsOpen ? (
-              <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-pink-900/80">
+              <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-violet-900/80">
                 {currentSkill.techniqueTips.map((tip, idx) => (
                   <li key={idx}>{tip}</li>
                 ))}
@@ -143,7 +143,7 @@ export default function PracticeLoop({
 
       <div className={`${CARD_CLASS} flex flex-col gap-4`}>
         <fieldset>
-          <legend className="text-sm font-medium text-pink-900/70">How did it feel?</legend>
+          <legend className="text-sm font-medium text-violet-900/70">How did it feel?</legend>
           <div className="mt-3 flex flex-wrap gap-2">
             {RATINGS.map((r) => {
               const selected = rating === r.value;
@@ -154,10 +154,10 @@ export default function PracticeLoop({
                   onClick={() => setRating(r.value)}
                   disabled={isPending}
                   aria-pressed={selected}
-                  className={`flex flex-col items-center gap-1 rounded-full border px-4 py-2 transition focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-50 ${
+                  className={`flex flex-col items-center gap-1 rounded-full border px-4 py-2 transition focus:outline-none focus:ring-2 focus:ring-violet-300 disabled:opacity-50 ${
                     selected
-                      ? 'border-pink-500 bg-pink-100 text-pink-900'
-                      : 'border-pink-200 bg-white text-pink-900/80 hover:border-pink-400'
+                      ? 'border-violet-500 bg-violet-100 text-violet-900'
+                      : 'border-violet-200 bg-white text-violet-900/80 hover:border-violet-400'
                   }`}
                 >
                   <span className="text-lg font-semibold">{r.value}</span>
@@ -169,7 +169,7 @@ export default function PracticeLoop({
         </fieldset>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="notes" className="text-sm font-medium text-pink-900/70">
+          <label htmlFor="notes" className="text-sm font-medium text-violet-900/70">
             Notes (optional)
           </label>
           <textarea
@@ -179,7 +179,7 @@ export default function PracticeLoop({
             placeholder="What worked? What was hard?"
             rows={3}
             disabled={isPending}
-            className="w-full rounded-lg border border-pink-200 px-3 py-2 focus:border-pink-500 focus:outline-none"
+            className="w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:outline-none"
           />
         </div>
 
@@ -189,7 +189,7 @@ export default function PracticeLoop({
             checked={isMilestone}
             onChange={(e) => setIsMilestone(e.target.checked)}
             disabled={isPending}
-            className="h-5 w-5 accent-pink-600"
+            className="h-5 w-5 accent-violet-600"
           />
           <span>
             <span className="mr-1" aria-hidden>
@@ -203,12 +203,12 @@ export default function PracticeLoop({
           <button
             type="button"
             onClick={() => setRecording((v) => !v)}
-            className="self-start rounded-full border border-dashed border-pink-300 px-4 py-2 text-sm text-pink-700 hover:border-pink-500"
+            className="self-start rounded-full border border-dashed border-violet-300 px-4 py-2 text-sm text-violet-700 hover:border-violet-500"
           >
             {recording ? 'Stop video (preview)' : 'Tap to record video (coming soon)'}
           </button>
           {recording ? (
-            <div className="flex h-32 items-center justify-center rounded-xl border-2 border-dashed border-pink-300 bg-pink-50 text-sm text-pink-700">
+            <div className="flex h-32 items-center justify-center rounded-xl border-2 border-dashed border-violet-300 bg-violet-50 text-sm text-violet-700">
               Video recording will land in a later update.
             </div>
           ) : null}
@@ -217,13 +217,13 @@ export default function PracticeLoop({
 
       {remainingSkills.length > 0 ? (
         <div className={`${CARD_CLASS} flex flex-col gap-2`}>
-          <p className="text-sm font-medium text-pink-900/70">Up next</p>
-          <ul className="text-sm text-pink-900/80">
+          <p className="text-sm font-medium text-violet-900/70">Up next</p>
+          <ul className="text-sm text-violet-900/80">
             {remainingSkills.slice(0, 3).map((s) => (
               <li key={s.id}>• {s.name}</li>
             ))}
             {remainingSkills.length > 3 ? (
-              <li className="text-pink-900/60">
+              <li className="text-violet-900/60">
                 …and {remainingSkills.length - 3} more
               </li>
             ) : null}

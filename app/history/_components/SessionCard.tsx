@@ -76,7 +76,7 @@ function formatDuration(seconds: number): string {
 
 function Stars({ rating }: { rating: Rating }) {
   return (
-    <span aria-label={`${rating} of 5`} className="text-pink-600">
+    <span aria-label={`${rating} of 5`} className="text-violet-600">
       {[1, 2, 3, 4, 5].map((i) => (
         <span key={i}>{i <= rating ? '★' : '☆'}</span>
       ))}
@@ -99,33 +99,33 @@ export function SessionCard({ session, attempts, skillsById }: Props) {
   const notesPreview = firstLine(session.overallNotes);
 
   return (
-    <details className="group rounded-2xl border border-pink-200 bg-white p-5 shadow-sm">
+    <details className="group rounded-2xl border border-violet-200 bg-white p-5 shadow-sm">
       <summary className="flex cursor-pointer list-none flex-col gap-2 marker:hidden [&::-webkit-details-marker]:hidden">
         <div className="flex items-baseline justify-between gap-3">
           <div className="flex items-baseline gap-2">
-            <h2 className="text-lg font-semibold tracking-tight text-pink-950">{dateLabel}</h2>
+            <h2 className="text-lg font-semibold tracking-tight text-violet-950">{dateLabel}</h2>
             {moodEmoji && (
               <span aria-label={`mood ${session.moodRating}`} className="text-xl">
                 {moodEmoji}
               </span>
             )}
           </div>
-          <span className="text-sm text-pink-900/60 transition group-open:rotate-180">▾</span>
+          <span className="text-sm text-violet-900/60 transition group-open:rotate-180">▾</span>
         </div>
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-pink-900/70">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-violet-900/70">
           <span>{durationLabel}</span>
           <span>
             {attempts.length} {attempts.length === 1 ? 'skill' : 'skills'}
           </span>
         </div>
         {notesPreview && (
-          <p className="text-sm text-pink-900/80 italic">&ldquo;{notesPreview}&rdquo;</p>
+          <p className="text-sm text-violet-900/80 italic">&ldquo;{notesPreview}&rdquo;</p>
         )}
       </summary>
 
-      <div className="mt-4 flex flex-col gap-3 border-t border-pink-100 pt-4">
+      <div className="mt-4 flex flex-col gap-3 border-t border-violet-100 pt-4">
         {attempts.length === 0 ? (
-          <p className="text-sm text-pink-900/60">No skills logged in this session.</p>
+          <p className="text-sm text-violet-900/60">No skills logged in this session.</p>
         ) : (
           attempts.map((attempt) => {
             const skill = skillsById.get(attempt.skillId);
@@ -134,30 +134,30 @@ export function SessionCard({ session, attempts, skillsById }: Props) {
             return (
               <div
                 key={attempt.id}
-                className="rounded-xl border border-pink-100 bg-pink-50/50 p-3"
+                className="rounded-xl border border-violet-100 bg-violet-50/50 p-3"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-col">
-                    <span className="font-medium text-pink-950">{skillName}</span>
+                    <span className="font-medium text-violet-950">{skillName}</span>
                     {categoryLabel && (
-                      <span className="text-xs text-pink-900/60">{categoryLabel}</span>
+                      <span className="text-xs text-violet-900/60">{categoryLabel}</span>
                     )}
                   </div>
                   <Stars rating={attempt.rating} />
                 </div>
                 {attempt.notes && attempt.notes.trim() && (
-                  <p className="mt-2 text-sm text-pink-900/80">{attempt.notes}</p>
+                  <p className="mt-2 text-sm text-violet-900/80">{attempt.notes}</p>
                 )}
               </div>
             );
           })
         )}
         {session.overallNotes && session.overallNotes.trim() && (
-          <div className="rounded-xl bg-pink-50 p-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-pink-900/60">
+          <div className="rounded-xl bg-violet-50 p-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-violet-900/60">
               Notes
             </p>
-            <p className="mt-1 text-sm whitespace-pre-wrap text-pink-900/90">
+            <p className="mt-1 text-sm whitespace-pre-wrap text-violet-900/90">
               {session.overallNotes}
             </p>
           </div>

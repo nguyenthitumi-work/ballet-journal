@@ -25,7 +25,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-pink-50/40 text-pink-950">
+      <body className="min-h-full flex flex-col bg-violet-50/40 text-violet-950">
         {user ? <NavBar email={user.email ?? null} /> : null}
         <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6">{children}</main>
       </body>
