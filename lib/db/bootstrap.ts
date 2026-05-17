@@ -4,29 +4,33 @@ import { SEED_SKILLS } from '@/lib/data/seedSkills';
 import { SEED_PLANS } from '@/lib/data/seedPlans';
 import { CATEGORY_BY_LABEL } from '@/lib/types';
 
-export async function ensureDeviceBootstrapped(deviceId: string): Promise<void> {
-  const supabase = getServerSupabase();
+export async function ensureUserBootstrapped(userId: string): Promise<void> {
+  const supabase = await getServerSupabase();
 
-  const { data: existing } = await supabase
+  // Race-safe: layout and page render in parallel and both call this with the
+  // same user_id on first login. Use upsert+ignoreDuplicates so the database
+  // resolves the race at the user_id unique constraint. .select() returns
+  // only rows actually inserted — if empty, another request beat us to it and
+  // is (or has) seeded skills/plans.
+  const { data: inserted, error: profileError } = await supabase
     .from('user_profile')
-    .select('device_id')
-    .eq('device_id', deviceId)
-    .maybeSingle();
-
-  if (existing) return;
-
-  const { error: profileError } = await supabase.from('user_profile').insert({
-    device_id: deviceId,
-    name: null,
-    age: null,
-    level: 'Beginner',
-    streak: 0,
-    last_practice_date: null,
-  });
+    .upsert(
+      {
+        user_id: userId,
+        name: null,
+        age: null,
+        level: 'Beginner',
+        streak: 0,
+        last_practice_date: null,
+      },
+      { onConflict: 'user_id', ignoreDuplicates: true },
+    )
+    .select('id');
   if (profileError) throw new Error(`Failed to create profile: ${profileError.message}`);
+  if (!inserted || inserted.length === 0) return;
 
   const skillRows = SEED_SKILLS.map((s) => ({
-    device_id: deviceId,
+    user_id: userId,
     category_id: CATEGORY_BY_LABEL[s.category],
     name: s.name,
     description: s.description,
@@ -47,7 +51,7 @@ export async function ensureDeviceBootstrapped(deviceId: string): Promise<void> 
   );
 
   const planRows = SEED_PLANS.map((p) => ({
-    device_id: deviceId,
+    user_id: userId,
     name: p.name,
     description: p.description,
     is_built_in: true,

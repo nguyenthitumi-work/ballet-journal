@@ -3,12 +3,12 @@ import { getServerSupabase } from '@/lib/supabase/server';
 import { planFromRow } from '@/lib/types';
 import type { PracticePlan, PracticePlanRow } from '@/lib/types';
 
-export async function listPlans(deviceId: string): Promise<PracticePlan[]> {
-  const supabase = getServerSupabase();
+export async function listPlans(userId: string): Promise<PracticePlan[]> {
+  const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from('practice_plan')
     .select('*')
-    .eq('device_id', deviceId)
+    .eq('user_id', userId)
     .order('is_built_in', { ascending: false })
     .order('name', { ascending: true });
   if (error) throw new Error(error.message);
@@ -16,14 +16,14 @@ export async function listPlans(deviceId: string): Promise<PracticePlan[]> {
 }
 
 export async function getPlan(
-  deviceId: string,
+  userId: string,
   planId: string,
 ): Promise<PracticePlan | null> {
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from('practice_plan')
     .select('*')
-    .eq('device_id', deviceId)
+    .eq('user_id', userId)
     .eq('id', planId)
     .maybeSingle();
   if (error) throw new Error(error.message);

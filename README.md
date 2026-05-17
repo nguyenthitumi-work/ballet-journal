@@ -26,8 +26,8 @@ Built for one specific 10-year-old first, then generalizable later.
 - **TypeScript**
 - **Tailwind CSS v4**
 - **Supabase Postgres** (free tier) for journal data
-- **No auth.** Data is scoped by a `device_id` HttpOnly cookie set on first visit. Anyone with
-  physical device access can see her journal — that's the threat model for a personal app.
+- **Supabase Auth** — magic link sign-in. Each user has their own profile/skills/history
+  scoped by `user_id`. RLS enforces per-user isolation in the database.
 - **Vercel** for hosting (free tier, deploys on git push)
 
 ## Setup
@@ -38,14 +38,36 @@ Built for one specific 10-year-old first, then generalizable later.
 2. Wait for it to provision (~1 min).
 3. Project Settings → API → copy the **Project URL** and **anon public** key.
 
-### 2. Run the migration
+### 2. Run the migrations
 
-Open the Supabase SQL Editor and paste the contents of
-`supabase/migrations/20260515000000_initial.sql`. Run it. This creates all tables, indexes,
-triggers, and seeds the 6 skill categories.
+Apply every file under `supabase/migrations/` in chronological order via the SQL Editor:
 
-Per-device data (skills, plans, profile) is seeded lazily by `lib/db/bootstrap.ts` the first
-time a new device hits the app.
+1. `20260515000000_initial.sql` — base schema (tables, indexes, triggers, seeded categories).
+2. `20260516000000_add_skill_reference_url.sql` — adds the YouTube reference URL column.
+3. `20260517000000_add_auth.sql` — adds `user_id` columns and RLS for Supabase Auth.
+
+### 2.5. Configure Supabase Auth
+
+1. https://supabase.com/dashboard/project/<your-project>/auth/providers → enable **Email**.
+2. Turn off "Confirm email" (the emailed code is the verification — no separate step).
+3. https://supabase.com/dashboard/project/<your-project>/auth/url-configuration:
+   - **Site URL**: production URL (e.g. `https://ballet-journal-three.vercel.app`)
+   - **Redirect URLs**: add `http://localhost:3000/auth/callback` and `<site-url>/auth/callback`
+     (kept for future OAuth providers; the email flow does not use it.)
+4. https://supabase.com/dashboard/project/<your-project>/auth/templates → edit the
+   **Magic Link** template. Replace the body with a code-only version so corporate email
+   scanners (Microsoft Safe Links, Gmail URL scanning, etc.) cannot pre-fetch and burn
+   the OTP before the human clicks. Suggested body:
+
+   ```html
+   <h2>Your sign-in code</h2>
+   <p>Use this code to sign in to Ballet Journal:</p>
+   <p style="font-size: 24px; letter-spacing: 4px; font-weight: bold;">{{ .Token }}</p>
+   <p>This code expires in 1 hour.</p>
+   ```
+
+Per-user data (skills, plans, profile) is seeded lazily by `lib/db/bootstrap.ts` on first
+sign-in.
 
 ### 3. Configure env vars
 
@@ -62,10 +84,12 @@ npm run dev
 ```
 
 Open http://localhost:3000. The first visit:
-- Sets a `bj_device_id` HttpOnly cookie
-- Creates a `user_profile` row for that device
-- Seeds 33 skills + 4 practice plans for that device
-- Redirects you to onboarding to fill in name/age/level
+- Redirects to `/login` because no Supabase Auth session exists.
+- Enter your email, then enter the verification code from your inbox.
+- After verification, Supabase sets a session cookie and redirects to `/`.
+- On first sign-in, `lib/db/bootstrap.ts` creates a `user_profile` row, seeds 33 skills + 4
+  practice plans for that user.
+- Redirects to `/onboarding` to fill in name/age/level.
 
 ### 5. Deploy to Vercel
 
@@ -91,37 +115,36 @@ vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY
 vercel --prod
 ```
 
-**Note on cross-device data.** Each origin (`localhost`, `192.168.1.x`, `*.vercel.app`)
-gets its own `bj_device_id` cookie, so a fresh visit to the deployed URL starts a new
-profile. To carry over your existing local profile, copy the `bj_device_id` cookie
-value from `localhost` dev tools and set it on the deployed URL.
+**Note on multi-device usage.** Sign in with the same email on every device — Supabase Auth
+sessions are bound to the email/user, not the device. The profile follows you.
 
 ## Project structure
 
 ```
 ballet-journal/
 ├── app/
-│   ├── layout.tsx              # root layout + NavBar + session bootstrap
+│   ├── layout.tsx              # root layout + NavBar (when signed in)
 │   ├── page.tsx                # Today / Home tab
-│   ├── globals.css
-│   ├── onboarding/             # first-visit onboarding flow
+│   ├── login/                  # magic link sign-in page + actions
+│   ├── auth/callback/          # OAuth code exchange route handler
+│   ├── onboarding/             # first-sign-in onboarding flow
 │   ├── skills/                 # browser + detail + mark-as-focus
 │   ├── practice/               # plan list + the core practice loop
 │   ├── history/                # past sessions, streak, calendar
 │   └── settings/               # name/age/level, storage stats, reset
+├── proxy.ts                    # Next 16 middleware: refresh session, gate auth
 ├── components/
 │   └── NavBar.tsx
 ├── lib/
 │   ├── types.ts                # camelCase domain types + snake_case row types + mappers
-│   ├── device.ts               # device_id cookie helpers
-│   ├── session.ts              # getSessionContext() — used at the top of every route
+│   ├── auth.ts                 # getAuthUser / getAuthUserId helpers
+│   ├── session.ts              # getSessionContext() — used at the top of every protected page
 │   ├── data/                   # seedSkills.ts, seedPlans.ts
 │   ├── services/               # streak.ts, suggestion.ts (pure functions)
-│   ├── supabase/               # server.ts, client.ts
+│   ├── supabase/               # server.ts, middleware.ts
 │   └── db/                     # bootstrap, profile, skills, sessions, plans
 └── supabase/
-    └── migrations/
-        └── 20260515000000_initial.sql
+    └── migrations/             # initial.sql, add_skill_reference_url.sql, add_auth.sql
 ```
 
 ## Data model
@@ -137,13 +160,17 @@ practice_session ── (many) skill_attempt
 
 practice_plan → jsonb ordered list of skill IDs (4 seeded built-ins)
 
-user_profile (1 per device): name, age, level, streak, last_practice_date, device_id PK
+user_profile (1 per user): name, age, level, streak, last_practice_date, user_id FK auth.users
 ```
 
 ## Design choices
 
-**Why no auth?** It's her phone. The device_id cookie scopes data; physical access is the only
-authorization. Adding auth would add friction without adding meaningful security for a personal app.
+**Why emailed-code auth (not magic link)?** No passwords means no password reset
+flows, no "weak password" warnings, no credential leakage. Codes (typed by the human)
+survive corporate email gateways like Microsoft Safe Links and Gmail URL scanning, which
+silently pre-fetch links and burn single-use magic-link OTPs before the user clicks.
+Supabase Auth is built into the stack already. Trade-off: free-tier Supabase caps emails
+at 4/hour — fine for a personal/family app, painful at scale.
 
 **Why Postgres + Supabase (not just IndexedDB)?** History survives a browser-data clear, and
 the same data is reachable from iPad later (we'll add auth then if she has multiple devices).
@@ -151,9 +178,9 @@ the same data is reachable from iPad later (we'll add auth then if she has multi
 **Why a soft streak counter?** She's 10. The streak is a gentle motivator, not a stress source.
 Missing a day silently resets to 1, no "you broke your streak!" red alert.
 
-**Why no RLS?** No JWT, no auth, no session. The anon key is server-only (Next.js Route
-Handlers and Server Actions), the browser never sees it directly, and every query is scoped by
-`device_id` through `lib/db/*` helpers. RLS without an auth claim is theater.
+**Why RLS now?** With magic-link auth in place, every query carries an `auth.uid()` claim.
+RLS policies (`user_id = auth.uid()`) make sure one user can never see another user's rows
+even if the app code is wrong — defense in depth at the database level.
 
 ## Roadmap (post-v1)
 

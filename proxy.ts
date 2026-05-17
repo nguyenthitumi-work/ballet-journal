@@ -1,33 +1,27 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { randomUUID } from 'node:crypto';
+import { updateSession } from '@/lib/supabase/middleware';
 
-const COOKIE_NAME = 'bj_device_id';
-const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
-const UUID_RE = /^[0-9a-f-]{36}$/i;
+const PUBLIC_PREFIXES = ['/login', '/auth/'];
 
-export function proxy(request: NextRequest) {
-  const existing = request.cookies.get(COOKIE_NAME)?.value;
-  if (existing && UUID_RE.test(existing)) {
-    return NextResponse.next();
+export async function proxy(request: NextRequest) {
+  const { response, user } = await updateSession(request);
+
+  const { pathname } = request.nextUrl;
+  const isPublic = PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
+
+  if (!user && !isPublic) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    url.searchParams.set('next', pathname);
+    return NextResponse.redirect(url);
   }
 
-  const deviceId = randomUUID();
-
-  // Make the new cookie visible to downstream Server Components in this same
-  // request by mutating request.cookies and forwarding the request.
-  request.cookies.set(COOKIE_NAME, deviceId);
-
-  const response = NextResponse.next({
-    request: { headers: request.headers },
-  });
-
-  response.cookies.set(COOKIE_NAME, deviceId, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
-    maxAge: ONE_YEAR_SECONDS,
-  });
+  if (user && pathname === '/login') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/';
+    url.search = '';
+    return NextResponse.redirect(url);
+  }
 
   return response;
 }

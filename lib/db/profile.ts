@@ -3,12 +3,12 @@ import { getServerSupabase } from '@/lib/supabase/server';
 import { profileFromRow } from '@/lib/types';
 import type { Level, UserProfile, UserProfileRow } from '@/lib/types';
 
-export async function getProfile(deviceId: string): Promise<UserProfile | null> {
-  const supabase = getServerSupabase();
+export async function getProfile(userId: string): Promise<UserProfile | null> {
+  const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from('user_profile')
     .select('*')
-    .eq('device_id', deviceId)
+    .eq('user_id', userId)
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) return null;
@@ -16,10 +16,10 @@ export async function getProfile(deviceId: string): Promise<UserProfile | null> 
 }
 
 export async function updateProfile(
-  deviceId: string,
+  userId: string,
   patch: Partial<Pick<UserProfile, 'name' | 'age' | 'level'>>,
 ): Promise<UserProfile> {
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const row: Record<string, unknown> = {};
   if (patch.name !== undefined) row.name = patch.name;
   if (patch.age !== undefined) row.age = patch.age;
@@ -28,7 +28,7 @@ export async function updateProfile(
   const { data, error } = await supabase
     .from('user_profile')
     .update(row)
-    .eq('device_id', deviceId)
+    .eq('user_id', userId)
     .select('*')
     .single();
   if (error) throw new Error(error.message);
@@ -36,18 +36,23 @@ export async function updateProfile(
 }
 
 export async function setStreak(
-  deviceId: string,
+  userId: string,
   streak: number,
   lastPracticeDate: string,
 ): Promise<void> {
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const { error } = await supabase
     .from('user_profile')
     .update({ streak, last_practice_date: lastPracticeDate })
-    .eq('device_id', deviceId);
+    .eq('user_id', userId);
   if (error) throw new Error(error.message);
 }
 
 export function isOnboarded(p: UserProfile | null): boolean {
-  return Boolean(p && p.name && p.age && (['Beginner', 'Intermediate', 'Advanced'] as Level[]).includes(p.level));
+  return Boolean(
+    p &&
+      p.name &&
+      p.age &&
+      (['Beginner', 'Intermediate', 'Advanced'] as Level[]).includes(p.level),
+  );
 }

@@ -37,12 +37,12 @@ const PRIMARY_BTN_CLASS =
   'rounded-full bg-pink-600 px-6 py-3 font-medium text-white hover:bg-pink-700 disabled:opacity-50';
 
 export default async function PracticeIndexPage() {
-  const { deviceId, onboarded } = await getSessionContext();
+  const { userId, onboarded } = await getSessionContext();
   if (!onboarded) {
     redirect('/onboarding');
   }
 
-  const [plans, skills] = await Promise.all([listPlans(deviceId), listSkills(deviceId)]);
+  const [plans, skills] = await Promise.all([listPlans(userId), listSkills(userId)]);
   const skillById = new Map(skills.map((s) => [s.id, s]));
 
   return (

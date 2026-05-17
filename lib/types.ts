@@ -37,7 +37,7 @@ export interface SkillCategory {
 }
 
 export interface UserProfile {
-  deviceId: string;
+  userId: string;
   name: string | null;
   age: number | null;
   level: Level;
@@ -49,7 +49,7 @@ export interface UserProfile {
 
 export interface Skill {
   id: string;
-  deviceId: string;
+  userId: string;
   categoryId: CategoryId;
   name: string;
   description: string | null;
@@ -64,7 +64,7 @@ export interface Skill {
 
 export interface PracticePlan {
   id: string;
-  deviceId: string;
+  userId: string;
   name: string;
   description: string | null;
   isBuiltIn: boolean;
@@ -74,7 +74,7 @@ export interface PracticePlan {
 
 export interface PracticeSession {
   id: string;
-  deviceId: string;
+  userId: string;
   planId: string | null;
   startedAt: string;
   endedAt: string | null;
@@ -96,7 +96,7 @@ export interface SkillAttempt {
 
 export interface SkillRow {
   id: string;
-  device_id: string;
+  user_id: string;
   category_id: CategoryId;
   name: string;
   description: string | null;
@@ -118,7 +118,7 @@ export interface SkillCategoryRow {
 }
 
 export interface UserProfileRow {
-  device_id: string;
+  user_id: string;
   name: string | null;
   age: number | null;
   level: Level;
@@ -130,7 +130,7 @@ export interface UserProfileRow {
 
 export interface PracticePlanRow {
   id: string;
-  device_id: string;
+  user_id: string;
   name: string;
   description: string | null;
   is_built_in: boolean;
@@ -140,7 +140,7 @@ export interface PracticePlanRow {
 
 export interface PracticeSessionRow {
   id: string;
-  device_id: string;
+  user_id: string;
   plan_id: string | null;
   started_at: string;
   ended_at: string | null;
@@ -162,7 +162,7 @@ export interface SkillAttemptRow {
 
 export const skillFromRow = (r: SkillRow): Skill => ({
   id: r.id,
-  deviceId: r.device_id,
+  userId: r.user_id,
   categoryId: r.category_id,
   name: r.name,
   description: r.description,
@@ -184,7 +184,7 @@ export const categoryFromRow = (r: SkillCategoryRow): SkillCategory => ({
 });
 
 export const profileFromRow = (r: UserProfileRow): UserProfile => ({
-  deviceId: r.device_id,
+  userId: r.user_id,
   name: r.name,
   age: r.age,
   level: r.level,
@@ -196,7 +196,7 @@ export const profileFromRow = (r: UserProfileRow): UserProfile => ({
 
 export const planFromRow = (r: PracticePlanRow): PracticePlan => ({
   id: r.id,
-  deviceId: r.device_id,
+  userId: r.user_id,
   name: r.name,
   description: r.description,
   isBuiltIn: r.is_built_in,
@@ -206,7 +206,7 @@ export const planFromRow = (r: PracticePlanRow): PracticePlan => ({
 
 export const sessionFromRow = (r: PracticeSessionRow): PracticeSession => ({
   id: r.id,
-  deviceId: r.device_id,
+  userId: r.user_id,
   planId: r.plan_id,
   startedAt: r.started_at,
   endedAt: r.ended_at,

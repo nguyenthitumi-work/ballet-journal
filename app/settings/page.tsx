@@ -25,17 +25,17 @@ function Stat({ label, value }: StatProps) {
 }
 
 export default async function SettingsPage() {
-  const { deviceId, profile, onboarded } = await getSessionContext();
+  const { userId, profile, onboarded } = await getSessionContext();
 
   if (!onboarded || !isOnboarded(profile)) {
     redirect('/onboarding');
   }
 
   const [skills, focusSkills, plans, sessions] = await Promise.all([
-    listSkills(deviceId),
-    listFocusSkills(deviceId),
-    listPlans(deviceId),
-    listSessions(deviceId),
+    listSkills(userId),
+    listFocusSkills(userId),
+    listPlans(userId),
+    listSessions(userId),
   ]);
 
   const attemptsBySession = await Promise.all(

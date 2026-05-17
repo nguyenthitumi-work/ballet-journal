@@ -8,15 +8,15 @@ import { StreakBanner } from './_components/StreakBanner';
 import { SessionCard } from './_components/SessionCard';
 
 export default async function HistoryPage() {
-  const { deviceId, profile, onboarded } = await getSessionContext();
+  const { userId, profile, onboarded } = await getSessionContext();
 
   if (!onboarded) {
     redirect('/onboarding');
   }
 
   const [sessions, skills] = await Promise.all([
-    listSessions(deviceId),
-    listSkills(deviceId),
+    listSessions(userId),
+    listSkills(userId),
   ]);
 
   // PERF: per-session attempt fetch in parallel (N round-trips). Acceptable for v1

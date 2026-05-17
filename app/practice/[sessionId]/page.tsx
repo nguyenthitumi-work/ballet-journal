@@ -16,16 +16,16 @@ import FinishSession from '../_components/FinishSession';
 const CARD_CLASS = 'rounded-2xl border border-pink-200 bg-white p-6 shadow-sm';
 
 async function resolveSkillOrder(
-  deviceId: string,
+  userId: string,
   planId: string | null,
 ): Promise<string[]> {
   if (planId !== null) {
-    const plan = await getPlan(deviceId, planId);
+    const plan = await getPlan(userId, planId);
     if (plan === null) return [];
     return plan.orderedSkillIds;
   }
 
-  const allSkills = await listSkills(deviceId);
+  const allSkills = await listSkills(userId);
   const picks = pickDailySuggestion({
     skills: allSkills.map((s) => ({
       id: s.id,
@@ -43,12 +43,12 @@ export default async function PracticeSessionPage(props: {
   params: Promise<{ sessionId: string }>;
 }) {
   const { sessionId } = await props.params;
-  const { deviceId, onboarded } = await getSessionContext();
+  const { userId, onboarded } = await getSessionContext();
   if (!onboarded) {
     redirect('/onboarding');
   }
 
-  const session = await getSession(deviceId, sessionId);
+  const session = await getSession(userId, sessionId);
   if (session === null) {
     return (
       <section className="flex flex-col gap-4">
@@ -80,7 +80,7 @@ export default async function PracticeSessionPage(props: {
     );
   }
 
-  const skillOrder = await resolveSkillOrder(deviceId, session.planId);
+  const skillOrder = await resolveSkillOrder(userId, session.planId);
   const attempts = await listAttemptsForSession(sessionId);
   const attemptedSet = new Set(attempts.map((a) => a.skillId));
 
@@ -126,7 +126,7 @@ export default async function PracticeSessionPage(props: {
     );
   }
 
-  const currentSkill = await getSkill(deviceId, nextSkillId);
+  const currentSkill = await getSkill(userId, nextSkillId);
   if (currentSkill === null) {
     return (
       <section className="flex flex-col gap-4">
@@ -145,7 +145,7 @@ export default async function PracticeSessionPage(props: {
   const remainingSkills: { id: string; name: string }[] = [];
   for (const id of remainingIds) {
     if (id === currentSkill.id) continue;
-    const s = await getSkill(deviceId, id);
+    const s = await getSkill(userId, id);
     if (s) remainingSkills.push({ id: s.id, name: s.name });
   }
 

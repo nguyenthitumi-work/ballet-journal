@@ -39,8 +39,8 @@ export async function updateProfileAction(
     throw new Error('Please pick a level.');
   }
 
-  const { deviceId } = await getSessionContext();
-  await updateProfile(deviceId, { name, age, level: levelStr });
+  const { userId } = await getSessionContext();
+  await updateProfile(userId, { name, age, level: levelStr });
 
   revalidatePath('/settings');
   revalidatePath('/');

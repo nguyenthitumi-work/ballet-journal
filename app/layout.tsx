@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Geist } from 'next/font/google';
 import './globals.css';
 import { NavBar } from '@/components/NavBar';
-import { getSessionContext } from '@/lib/session';
+import { getAuthUser } from '@/lib/auth';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -19,12 +19,14 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  await getSessionContext();
+  // Show the NavBar only for signed-in users. Public pages (/login,
+  // /auth/callback) render bare. proxy.ts handles the auth gate.
+  const user = await getAuthUser();
 
   return (
     <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-pink-50/40 text-pink-950">
-        <NavBar />
+        {user ? <NavBar email={user.email ?? null} /> : null}
         <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6">{children}</main>
       </body>
     </html>

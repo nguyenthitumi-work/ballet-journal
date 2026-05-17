@@ -19,14 +19,14 @@ export async function startPracticeFromPlan(planId: string): Promise<void> {
   if (typeof planId !== 'string' || planId.length === 0) {
     throw new Error('Missing plan id.');
   }
-  const { deviceId } = await getSessionContext();
-  const session = await startSession(deviceId, planId);
+  const { userId } = await getSessionContext();
+  const session = await startSession(userId, planId);
   redirect(`/practice/${session.id}`);
 }
 
 export async function startFreePractice(): Promise<void> {
-  const { deviceId } = await getSessionContext();
-  const session = await startSession(deviceId, null);
+  const { userId } = await getSessionContext();
+  const session = await startSession(userId, null);
   redirect(`/practice/${session.id}`);
 }
 
@@ -54,8 +54,10 @@ export async function submitAttempt(args: {
       ? Math.floor(durationSeconds)
       : 0;
   const trimmedNotes = notes.trim();
+  const { userId } = await getSessionContext();
 
   await recordAttempt({
+    userId,
     sessionId,
     skillId,
     rating,
@@ -84,16 +86,16 @@ export async function finishSession(
     mood = moodRating;
   }
 
-  const { deviceId } = await getSessionContext();
+  const { userId } = await getSessionContext();
 
   await endSession(
-    deviceId,
+    userId,
     sessionId,
     mood,
     overallNotes.trim().length === 0 ? null : overallNotes.trim(),
   );
 
-  const profile = await getProfile(deviceId);
+  const profile = await getProfile(userId);
   if (profile) {
     const todayLocal = formatLocalDate(new Date(), LOCAL_TZ);
     const { newStreak, updatedLastPracticeDate } = computeNewStreak({
@@ -101,7 +103,7 @@ export async function finishSession(
       lastPracticeDate: profile.lastPracticeDate,
       todayLocal,
     });
-    await setStreak(deviceId, newStreak, updatedLastPracticeDate);
+    await setStreak(userId, newStreak, updatedLastPracticeDate);
   }
 
   revalidatePath('/');

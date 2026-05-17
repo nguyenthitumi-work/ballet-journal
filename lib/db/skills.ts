@@ -10,7 +10,7 @@ import type {
 } from '@/lib/types';
 
 export async function listCategories(): Promise<SkillCategory[]> {
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from('skill_category')
     .select('*')
@@ -19,38 +19,38 @@ export async function listCategories(): Promise<SkillCategory[]> {
   return (data as SkillCategoryRow[]).map(categoryFromRow);
 }
 
-export async function listSkills(deviceId: string): Promise<Skill[]> {
-  const supabase = getServerSupabase();
+export async function listSkills(userId: string): Promise<Skill[]> {
+  const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from('skill')
     .select('*')
-    .eq('device_id', deviceId)
+    .eq('user_id', userId)
     .order('name', { ascending: true });
   if (error) throw new Error(error.message);
   return (data as SkillRow[]).map(skillFromRow);
 }
 
 export async function listSkillsByCategory(
-  deviceId: string,
+  userId: string,
   categoryId: CategoryId,
 ): Promise<Skill[]> {
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from('skill')
     .select('*')
-    .eq('device_id', deviceId)
+    .eq('user_id', userId)
     .eq('category_id', categoryId)
     .order('difficulty', { ascending: true });
   if (error) throw new Error(error.message);
   return (data as SkillRow[]).map(skillFromRow);
 }
 
-export async function getSkill(deviceId: string, skillId: string): Promise<Skill | null> {
-  const supabase = getServerSupabase();
+export async function getSkill(userId: string, skillId: string): Promise<Skill | null> {
+  const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from('skill')
     .select('*')
-    .eq('device_id', deviceId)
+    .eq('user_id', userId)
     .eq('id', skillId)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -59,25 +59,25 @@ export async function getSkill(deviceId: string, skillId: string): Promise<Skill
 }
 
 export async function setFocus(
-  deviceId: string,
+  userId: string,
   skillId: string,
   focus: boolean,
 ): Promise<void> {
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const { error } = await supabase
     .from('skill')
     .update({ is_currently_working_on: focus })
-    .eq('device_id', deviceId)
+    .eq('user_id', userId)
     .eq('id', skillId);
   if (error) throw new Error(error.message);
 }
 
-export async function listFocusSkills(deviceId: string): Promise<Skill[]> {
-  const supabase = getServerSupabase();
+export async function listFocusSkills(userId: string): Promise<Skill[]> {
+  const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from('skill')
     .select('*')
-    .eq('device_id', deviceId)
+    .eq('user_id', userId)
     .eq('is_currently_working_on', true)
     .order('name', { ascending: true });
   if (error) throw new Error(error.message);
@@ -85,15 +85,15 @@ export async function listFocusSkills(deviceId: string): Promise<Skill[]> {
 }
 
 export async function setReferenceUrl(
-  deviceId: string,
+  userId: string,
   skillId: string,
   referenceUrl: string | null,
 ): Promise<void> {
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const { error } = await supabase
     .from('skill')
     .update({ reference_url: referenceUrl })
-    .eq('device_id', deviceId)
+    .eq('user_id', userId)
     .eq('id', skillId);
   if (error) throw new Error(error.message);
 }

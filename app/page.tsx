@@ -34,7 +34,7 @@ function greetingTagline(now: Date): string {
 }
 
 export default async function HomePage() {
-  const { deviceId, profile, onboarded } = await getSessionContext();
+  const { userId, profile, onboarded } = await getSessionContext();
 
   if (!onboarded) {
     return (
@@ -54,7 +54,7 @@ export default async function HomePage() {
   }
 
   const now = new Date();
-  const skills = await listSkills(deviceId);
+  const skills = await listSkills(userId);
   const suggestionInput = skills.map((s) => ({
     id: s.id,
     name: s.name,

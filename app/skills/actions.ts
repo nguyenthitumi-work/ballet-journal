@@ -6,8 +6,8 @@ import { setFocus, setReferenceUrl } from '@/lib/db/skills';
 import { parseYouTubeId } from '@/lib/youtube';
 
 export async function toggleFocus(skillId: string, next: boolean): Promise<void> {
-  const { deviceId } = await getSessionContext();
-  await setFocus(deviceId, skillId, next);
+  const { userId } = await getSessionContext();
+  await setFocus(userId, skillId, next);
   revalidatePath('/skills');
   revalidatePath(`/skills/${skillId}`);
 }
@@ -16,12 +16,12 @@ export async function updateReferenceUrl(
   skillId: string,
   url: string | null,
 ): Promise<void> {
-  const { deviceId } = await getSessionContext();
+  const { userId } = await getSessionContext();
   if (url !== null && parseYouTubeId(url) === null) {
     throw new Error(
       'That doesn’t look like a YouTube link. Use a youtube.com or youtu.be URL.',
     );
   }
-  await setReferenceUrl(deviceId, skillId, url);
+  await setReferenceUrl(userId, skillId, url);
   revalidatePath(`/skills/${skillId}`);
 }

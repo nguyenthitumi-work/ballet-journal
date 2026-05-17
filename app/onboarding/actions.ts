@@ -37,8 +37,8 @@ export async function submitOnboarding(formData: FormData): Promise<void> {
     throw new Error('Please pick a level.');
   }
 
-  const { deviceId } = await getSessionContext();
-  await updateProfile(deviceId, { name, age, level: levelStr });
+  const { userId } = await getSessionContext();
+  await updateProfile(userId, { name, age, level: levelStr });
 
   redirect('/');
 }

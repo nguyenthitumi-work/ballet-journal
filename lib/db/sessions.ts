@@ -10,13 +10,13 @@ import type {
 } from '@/lib/types';
 
 export async function startSession(
-  deviceId: string,
+  userId: string,
   planId: string | null,
 ): Promise<PracticeSession> {
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from('practice_session')
-    .insert({ device_id: deviceId, plan_id: planId })
+    .insert({ user_id: userId, plan_id: planId })
     .select('*')
     .single();
   if (error) throw new Error(error.message);
@@ -24,12 +24,12 @@ export async function startSession(
 }
 
 export async function endSession(
-  deviceId: string,
+  userId: string,
   sessionId: string,
   moodRating: Rating | null,
   overallNotes: string | null,
 ): Promise<PracticeSession> {
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from('practice_session')
     .update({
@@ -37,7 +37,7 @@ export async function endSession(
       mood_rating: moodRating,
       overall_notes: overallNotes,
     })
-    .eq('device_id', deviceId)
+    .eq('user_id', userId)
     .eq('id', sessionId)
     .select('*')
     .single();
@@ -46,14 +46,14 @@ export async function endSession(
 }
 
 export async function getSession(
-  deviceId: string,
+  userId: string,
   sessionId: string,
 ): Promise<PracticeSession | null> {
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from('practice_session')
     .select('*')
-    .eq('device_id', deviceId)
+    .eq('user_id', userId)
     .eq('id', sessionId)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -62,14 +62,14 @@ export async function getSession(
 }
 
 export async function listSessions(
-  deviceId: string,
+  userId: string,
   limit = 50,
 ): Promise<PracticeSession[]> {
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from('practice_session')
     .select('*')
-    .eq('device_id', deviceId)
+    .eq('user_id', userId)
     .not('ended_at', 'is', null)
     .order('started_at', { ascending: false })
     .limit(limit);
@@ -78,6 +78,7 @@ export async function listSessions(
 }
 
 export async function recordAttempt(args: {
+  userId: string;
   sessionId: string;
   skillId: string;
   rating: Rating;
@@ -85,10 +86,11 @@ export async function recordAttempt(args: {
   isMilestone: boolean;
   durationSeconds: number;
 }): Promise<SkillAttempt> {
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from('skill_attempt')
     .insert({
+      user_id: args.userId,
       session_id: args.sessionId,
       skill_id: args.skillId,
       rating: args.rating,
@@ -103,7 +105,7 @@ export async function recordAttempt(args: {
 }
 
 export async function listAttemptsForSession(sessionId: string): Promise<SkillAttempt[]> {
-  const supabase = getServerSupabase();
+  const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from('skill_attempt')
     .select('*')

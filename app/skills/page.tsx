@@ -84,7 +84,7 @@ interface SkillsPageProps {
 }
 
 export default async function SkillsPage(props: SkillsPageProps) {
-  const { deviceId, onboarded } = await getSessionContext();
+  const { userId, onboarded } = await getSessionContext();
   if (!onboarded) redirect('/onboarding');
 
   const sp = await props.searchParams;
@@ -93,7 +93,7 @@ export default async function SkillsPage(props: SkillsPageProps) {
   const qRaw = firstParam(sp.q) ?? '';
   const q = qRaw.trim().toLowerCase();
 
-  const [categories, skills] = await Promise.all([listCategories(), listSkills(deviceId)]);
+  const [categories, skills] = await Promise.all([listCategories(), listSkills(userId)]);
 
   // Filter
   const filtered = skills.filter((s) => {

@@ -49,12 +49,12 @@ function humanizeDuration(totalSeconds: number): string {
 }
 
 export default async function SkillDetailPage(props: SkillDetailPageProps) {
-  const { deviceId, onboarded } = await getSessionContext();
+  const { userId, onboarded } = await getSessionContext();
   if (!onboarded) redirect('/onboarding');
 
   const { id } = await props.params;
   const [skill, categories] = await Promise.all([
-    getSkill(deviceId, id),
+    getSkill(userId, id),
     listCategories(),
   ]);
 
