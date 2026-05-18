@@ -59,10 +59,16 @@ export default async function HomePage() {
     id: s.id,
     name: s.name,
     categoryId: s.categoryId,
+    level: s.level,
+    progressStatus: s.progressStatus,
     isCurrentlyWorkingOn: s.isCurrentlyWorkingOn,
     lastAttemptedAt: s.lastAttemptedAt ? new Date(s.lastAttemptedAt) : null,
   }));
-  const picks = pickDailySuggestion({ skills: suggestionInput, now });
+  const picks = pickDailySuggestion({
+    skills: suggestionInput,
+    userLevel: profile.level,
+    now,
+  });
   const skillById = new Map<string, Skill>(skills.map((s) => [s.id, s]));
 
   return (

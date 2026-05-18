@@ -42,16 +42,19 @@ export async function startPracticeFromPlan(planId: string): Promise<void> {
 }
 
 export async function startFreePractice(): Promise<void> {
-  const { userId } = await getSessionContext();
+  const { userId, profile } = await getSessionContext();
   const skills = await listSkills(userId);
   const picks = pickDailySuggestion({
     skills: skills.map((s) => ({
       id: s.id,
       name: s.name,
       categoryId: s.categoryId,
+      level: s.level,
+      progressStatus: s.progressStatus,
       isCurrentlyWorkingOn: s.isCurrentlyWorkingOn,
       lastAttemptedAt: s.lastAttemptedAt ? new Date(s.lastAttemptedAt) : null,
     })),
+    userLevel: profile.level,
     now: new Date(),
   });
   const session = await startSession({

@@ -3,9 +3,38 @@ import { redirect } from 'next/navigation';
 import { getSessionContext } from '@/lib/session';
 import { listCategories, listSkills } from '@/lib/db/skills';
 import { CATEGORY_LABELS } from '@/lib/types';
-import type { CategoryId, Difficulty, ProgressStatus, Skill, SkillCategory } from '@/lib/types';
+import type {
+  CategoryId,
+  Difficulty,
+  Level,
+  ProgressStatus,
+  Skill,
+  SkillCategory,
+} from '@/lib/types';
 import { DifficultyBadge } from './_components/Difficulty';
 import { FilterBar } from './_components/FilterBar';
+
+const LEVEL_ORDER: Record<Level, number> = {
+  Beginner: 0,
+  Intermediate: 1,
+  Advanced: 2,
+};
+const ORDERED_LEVELS: Level[] = ['Beginner', 'Intermediate', 'Advanced'];
+const LEVEL_LABELS: Record<Level, string> = {
+  Beginner: 'Beginner',
+  Intermediate: 'Intermediate',
+  Advanced: 'Advanced',
+};
+const LEVEL_BADGE_CLASSES: Record<Level, string> = {
+  Beginner: 'bg-emerald-50 text-emerald-700',
+  Intermediate: 'bg-amber-50 text-amber-700',
+  Advanced: 'bg-violet-100 text-violet-700',
+};
+const LEVEL_BAR_COLORS: Record<Level, string> = {
+  Beginner: 'bg-emerald-500',
+  Intermediate: 'bg-amber-500',
+  Advanced: 'bg-violet-600',
+};
 
 const ALL_CATEGORY_IDS: CategoryId[] = [
   'barre',
@@ -50,12 +79,20 @@ function firstParam(value: string | string[] | undefined): string | undefined {
   return value;
 }
 
-function SkillCard({ skill }: { skill: Skill }) {
+function SkillCard({ skill, userLevel }: { skill: Skill; userLevel: Level }) {
   const statusLabel = PROGRESS_STATUS_LABELS[skill.progressStatus];
+  const aboveLevel = LEVEL_ORDER[skill.level] > LEVEL_ORDER[userLevel];
   return (
     <Link
       href={`/skills/${skill.id}`}
-      className="block rounded-2xl border border-violet-200 bg-white p-5 shadow-sm transition hover:border-violet-400"
+      aria-label={
+        aboveLevel
+          ? `${skill.name} — above your current level, peek allowed`
+          : skill.name
+      }
+      className={`block rounded-2xl border border-violet-200 bg-white p-5 shadow-sm transition hover:border-violet-400 ${
+        aboveLevel ? 'opacity-60' : ''
+      }`}
     >
       <div className="flex items-start justify-between gap-3">
         <h3 className="text-base font-semibold tracking-tight text-violet-900">
@@ -80,7 +117,13 @@ function SkillCard({ skill }: { skill: Skill }) {
       {skill.description ? (
         <p className="mt-1 line-clamp-1 text-sm text-violet-900/70">{skill.description}</p>
       ) : null}
-      <div className="mt-3">
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <span
+          className={`text-[10px] font-medium rounded-full px-1.5 py-0.5 ${LEVEL_BADGE_CLASSES[skill.level]}`}
+          aria-label={`Level: ${LEVEL_LABELS[skill.level]}`}
+        >
+          {LEVEL_LABELS[skill.level]}
+        </span>
         <DifficultyBadge value={skill.difficulty} />
       </div>
       {skill.trains.length > 0 ? (
@@ -104,13 +147,75 @@ function SkillCard({ skill }: { skill: Skill }) {
   );
 }
 
+function LevelProgressStrip({
+  skills,
+  userLevel,
+}: {
+  skills: Skill[];
+  userLevel: Level;
+}) {
+  return (
+    <section
+      aria-label="Curriculum progress"
+      className="rounded-2xl border border-violet-200 bg-white p-4 shadow-sm"
+    >
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-sm font-semibold tracking-tight text-violet-900">
+          Curriculum progress
+        </h2>
+        <span className="text-xs text-violet-900/60">
+          You&apos;re at <strong>{LEVEL_LABELS[userLevel]}</strong>
+        </span>
+      </div>
+      <ul className="mt-3 flex flex-col gap-2">
+        {ORDERED_LEVELS.map((lvl) => {
+          const total = skills.filter((s) => s.level === lvl).length;
+          const mastered = skills.filter(
+            (s) => s.level === lvl && s.progressStatus === 'mastered',
+          ).length;
+          const pct = total === 0 ? 0 : Math.round((mastered / total) * 100);
+          const isCurrent = lvl === userLevel;
+          return (
+            <li key={lvl} className="flex items-center gap-3 text-xs">
+              <span
+                className={`w-24 shrink-0 font-medium ${
+                  isCurrent ? 'text-violet-900' : 'text-violet-900/70'
+                }`}
+              >
+                {LEVEL_LABELS[lvl]}
+              </span>
+              <div
+                className="relative h-2 flex-1 overflow-hidden rounded-full bg-violet-100"
+                role="progressbar"
+                aria-valuenow={pct}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={`${LEVEL_LABELS[lvl]}: ${mastered} of ${total} mastered`}
+              >
+                <div
+                  className={`h-full ${LEVEL_BAR_COLORS[lvl]} transition-all`}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <span className="w-14 shrink-0 text-right tabular-nums text-violet-900/70">
+                {mastered}/{total}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 interface SkillsPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 export default async function SkillsPage(props: SkillsPageProps) {
-  const { userId, onboarded } = await getSessionContext();
+  const { userId, profile, onboarded } = await getSessionContext();
   if (!onboarded) redirect('/onboarding');
+  const userLevel = profile.level;
 
   const sp = await props.searchParams;
   const catParam = firstParam(sp.cat);
@@ -160,6 +265,8 @@ export default async function SkillsPage(props: SkillsPageProps) {
           Pick something to learn, practice, or just peek at.
         </p>
       </header>
+
+      <LevelProgressStrip skills={skills} userLevel={userLevel} />
 
       <FilterBar
         q={qRaw}
@@ -212,6 +319,7 @@ export default async function SkillsPage(props: SkillsPageProps) {
             key={c.id}
             category={c}
             skills={byCategory.get(c.id) ?? []}
+            userLevel={userLevel}
           />
         ))
       )}
@@ -278,9 +386,11 @@ function CategoryChip({
 function CategorySection({
   category,
   skills,
+  userLevel,
 }: {
   category: SkillCategory;
   skills: Skill[];
+  userLevel: Level;
 }) {
   const label = CATEGORY_LABELS[category.id] ?? category.name;
   return (
@@ -298,7 +408,7 @@ function CategorySection({
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {skills.map((s) => (
-          <SkillCard key={s.id} skill={s} />
+          <SkillCard key={s.id} skill={s} userLevel={userLevel} />
         ))}
       </div>
     </section>

@@ -1,9 +1,11 @@
-import type { CategoryId } from '@/lib/types';
+import type { CategoryId, Level, ProgressStatus } from '@/lib/types';
 
 type SkillInput = {
   id: string;
   name: string;
   categoryId: CategoryId;
+  level: Level;
+  progressStatus: ProgressStatus;
   isCurrentlyWorkingOn: boolean;
   lastAttemptedAt: Date | null;
 };
@@ -18,6 +20,12 @@ const MIN_FOCUS_SKILLS = 3;
 const DEFAULT_CAT_CAP = 2;
 const RELAXED_CAT_CAP = 3;
 
+const LEVEL_ORDER: Record<Level, number> = {
+  Beginner: 0,
+  Intermediate: 1,
+  Advanced: 2,
+};
+
 function daysSince(date: Date | null, now: Date): number {
   if (date === null) return Infinity;
   return (now.getTime() - date.getTime()) / DAY_MS;
@@ -30,6 +38,20 @@ function shuffle<T>(items: T[], rng: () => number): T[] {
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
+}
+
+// A skill is "in scope" for the user's curriculum level when it is at-level,
+// or above-level (stretch goals), or below-level but not yet mastered (filling
+// in gaps). Mastered skills below the user's level drop out of the pool — the
+// whole point of level progression is to stop serving those once you've moved on.
+function filterToLevelPool(skills: SkillInput[], userLevel: Level): SkillInput[] {
+  const userRank = LEVEL_ORDER[userLevel];
+  return skills.filter((s) => {
+    const rank = LEVEL_ORDER[s.level];
+    if (rank === userRank) return true;
+    if (rank > userRank) return true;
+    return s.progressStatus !== 'mastered';
+  });
 }
 
 function takeWithCategoryCap(
@@ -87,16 +109,20 @@ function ensureCategoryPresent(
 
 export function pickDailySuggestion(args: {
   skills: SkillInput[];
+  userLevel: Level;
   now: Date;
   targetCount?: number;
   rng?: () => number;
 }): SuggestionPick[] {
-  const { skills, now, targetCount = 6, rng = Math.random } = args;
+  const { skills, userLevel, now, targetCount = 6, rng = Math.random } = args;
   if (skills.length === 0) return [];
 
-  const focus = skills.filter((s) => s.isCurrentlyWorkingOn);
-  const stale = skills.filter((s) => daysSince(s.lastAttemptedAt, now) >= STALE_DAYS);
-  const rediscovery = skills.filter(
+  const pool = filterToLevelPool(skills, userLevel);
+  if (pool.length === 0) return [];
+
+  const focus = pool.filter((s) => s.isCurrentlyWorkingOn);
+  const stale = pool.filter((s) => daysSince(s.lastAttemptedAt, now) >= STALE_DAYS);
+  const rediscovery = pool.filter(
     (s) => daysSince(s.lastAttemptedAt, now) >= REDISCOVERY_DAYS,
   );
 
@@ -106,7 +132,7 @@ export function pickDailySuggestion(args: {
 
   const taken = new Set<string>();
   const catCounts = new Map<CategoryId, number>();
-  const cap = skills.length < targetCount * 2 ? RELAXED_CAT_CAP : DEFAULT_CAT_CAP;
+  const cap = pool.length < targetCount * 2 ? RELAXED_CAT_CAP : DEFAULT_CAT_CAP;
 
   const picks: SuggestionPick[] = [];
 
@@ -126,7 +152,7 @@ export function pickDailySuggestion(args: {
     );
     picks.push(
       ...takeWithCategoryCap(
-        shuffle(skills, rng),
+        shuffle(pool, rng),
         targetCount - picks.length,
         'default',
         catCounts,
@@ -154,7 +180,7 @@ export function pickDailySuggestion(args: {
     if (picks.length < targetCount) {
       picks.push(
         ...takeWithCategoryCap(
-          shuffle(skills, rng),
+          shuffle(pool, rng),
           targetCount - picks.length,
           'default',
           catCounts,
@@ -165,8 +191,8 @@ export function pickDailySuggestion(args: {
     }
   }
 
-  ensureCategoryPresent('stretches', picks, skills, taken, rng);
-  ensureCategoryPresent('barre', picks, skills, taken, rng);
+  ensureCategoryPresent('stretches', picks, pool, taken, rng);
+  ensureCategoryPresent('barre', picks, pool, taken, rng);
 
   return picks.slice(0, targetCount);
 }

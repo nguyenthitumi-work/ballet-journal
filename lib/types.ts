@@ -57,6 +57,7 @@ export interface Skill {
   techniqueTips: string[];
   trains: string[];
   difficulty: Difficulty;
+  level: Level;
   defaultDurationSeconds: number;
   isCurrentlyWorkingOn: boolean;
   progressStatus: ProgressStatus;
@@ -113,6 +114,7 @@ export interface SkillRow {
   technique_tips: string[];
   trains: string[] | null;
   difficulty: number;
+  level: Level;
   default_duration_seconds: number;
   is_currently_working_on: boolean;
   progress_status: ProgressStatus;
@@ -188,6 +190,7 @@ export const skillFromRow = (r: SkillRow): Skill => ({
   techniqueTips: r.technique_tips,
   trains: r.trains ?? [],
   difficulty: r.difficulty as Difficulty,
+  level: r.level,
   defaultDurationSeconds: r.default_duration_seconds,
   isCurrentlyWorkingOn: r.is_currently_working_on,
   progressStatus: r.progress_status,

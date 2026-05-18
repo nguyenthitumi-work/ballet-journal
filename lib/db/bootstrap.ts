@@ -37,6 +37,7 @@ export async function ensureUserBootstrapped(userId: string): Promise<void> {
     technique_tips: s.techniqueTips,
     trains: s.trains,
     difficulty: s.difficulty,
+    level: s.level,
     default_duration_seconds: s.defaultDurationSeconds,
     is_currently_working_on: false,
   }));

@@ -1,4 +1,4 @@
-import type { Difficulty } from '@/lib/types';
+import type { Difficulty, Level } from '@/lib/types';
 
 export type SeedSkillCategory =
   | 'Barre'
@@ -15,6 +15,7 @@ export type SeedSkill = {
   techniqueTips: string[];
   trains: string[];
   difficulty: Difficulty;
+  level: Level;
   defaultDurationSeconds: number;
 };
 
@@ -31,6 +32,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Quads', 'Glutes', 'Turnout', 'Control'],
     difficulty: 1,
+    level: 'Beginner',
     defaultDurationSeconds: 180,
   },
   {
@@ -45,6 +47,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Feet', 'Turnout', 'Control', 'Posture'],
     difficulty: 1,
+    level: 'Beginner',
     defaultDurationSeconds: 150,
   },
   {
@@ -59,6 +62,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Feet', 'Calves', 'Control', 'Coordination'],
     difficulty: 2,
+    level: 'Beginner',
     defaultDurationSeconds: 120,
   },
   {
@@ -73,6 +77,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Hip Flexors', 'Turnout', 'Control', 'Coordination'],
     difficulty: 2,
+    level: 'Beginner',
     defaultDurationSeconds: 150,
   },
   {
@@ -87,6 +92,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Quads', 'Balance', 'Control', 'Coordination'],
     difficulty: 3,
+    level: 'Intermediate',
     defaultDurationSeconds: 150,
   },
   {
@@ -101,6 +107,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Feet', 'Calves', 'Power', 'Coordination'],
     difficulty: 3,
+    level: 'Intermediate',
     defaultDurationSeconds: 120,
   },
   {
@@ -115,6 +122,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Hip Flexors', 'Quads', 'Flexibility', 'Control'],
     difficulty: 3,
+    level: 'Intermediate',
     defaultDurationSeconds: 150,
   },
   {
@@ -129,6 +137,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Hip Flexors', 'Hamstrings', 'Power', 'Flexibility'],
     difficulty: 2,
+    level: 'Beginner',
     defaultDurationSeconds: 120,
   },
   {
@@ -143,6 +152,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Arms', 'Shoulders', 'Posture', 'Musicality'],
     difficulty: 1,
+    level: 'Beginner',
     defaultDurationSeconds: 90,
   },
   {
@@ -157,6 +167,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Coordination', 'Musicality', 'Rhythm', 'Balance'],
     difficulty: 2,
+    level: 'Beginner',
     defaultDurationSeconds: 120,
   },
   {
@@ -171,6 +182,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Feet', 'Calves', 'Coordination', 'Rhythm'],
     difficulty: 2,
+    level: 'Beginner',
     defaultDurationSeconds: 120,
   },
   {
@@ -185,6 +197,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Calves', 'Spotting', 'Balance', 'Control'],
     difficulty: 3,
+    level: 'Intermediate',
     defaultDurationSeconds: 120,
   },
   {
@@ -199,6 +212,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Core', 'Balance', 'Control', 'Strength'],
     difficulty: 3,
+    level: 'Intermediate',
     defaultDurationSeconds: 180,
   },
   {
@@ -213,6 +227,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Quads', 'Coordination', 'Control', 'Musicality'],
     difficulty: 2,
+    level: 'Beginner',
     defaultDurationSeconds: 90,
   },
   {
@@ -227,6 +242,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Calves', 'Quads', 'Power', 'Jump Height'],
     difficulty: 1,
+    level: 'Beginner',
     defaultDurationSeconds: 90,
   },
   {
@@ -241,6 +257,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Calves', 'Turnout', 'Power', 'Coordination'],
     difficulty: 2,
+    level: 'Beginner',
     defaultDurationSeconds: 90,
   },
   {
@@ -255,6 +272,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Calves', 'Feet', 'Power', 'Coordination'],
     difficulty: 2,
+    level: 'Beginner',
     defaultDurationSeconds: 90,
   },
   {
@@ -269,6 +287,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Calves', 'Power', 'Coordination', 'Jump Height'],
     difficulty: 3,
+    level: 'Intermediate',
     defaultDurationSeconds: 120,
   },
   {
@@ -283,6 +302,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Calves', 'Power', 'Coordination', 'Balance'],
     difficulty: 3,
+    level: 'Intermediate',
     defaultDurationSeconds: 120,
   },
   {
@@ -297,6 +317,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Glutes', 'Power', 'Coordination', 'Jump Height'],
     difficulty: 3,
+    level: 'Intermediate',
     defaultDurationSeconds: 120,
   },
   {
@@ -311,6 +332,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Power', 'Jump Height', 'Flexibility', 'Coordination'],
     difficulty: 4,
+    level: 'Advanced',
     defaultDurationSeconds: 180,
   },
   {
@@ -325,6 +347,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Core', 'Balance', 'Spotting', 'Control'],
     difficulty: 3,
+    level: 'Intermediate',
     defaultDurationSeconds: 180,
   },
   {
@@ -339,6 +362,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Core', 'Balance', 'Spotting', 'Control'],
     difficulty: 4,
+    level: 'Advanced',
     defaultDurationSeconds: 180,
   },
   {
@@ -353,6 +377,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Calves', 'Spotting', 'Balance', 'Coordination'],
     difficulty: 3,
+    level: 'Intermediate',
     defaultDurationSeconds: 150,
   },
   {
@@ -367,6 +392,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Calves', 'Spotting', 'Coordination', 'Endurance'],
     difficulty: 3,
+    level: 'Intermediate',
     defaultDurationSeconds: 120,
   },
   {
@@ -381,6 +407,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Balance', 'Spotting', 'Control', 'Coordination'],
     difficulty: 1,
+    level: 'Beginner',
     defaultDurationSeconds: 120,
   },
   {
@@ -395,6 +422,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Hamstrings', 'Hip Flexors', 'Flexibility'],
     difficulty: 3,
+    level: 'Intermediate',
     defaultDurationSeconds: 90,
   },
   {
@@ -409,6 +437,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Hamstrings', 'Hip Flexors', 'Flexibility'],
     difficulty: 3,
+    level: 'Intermediate',
     defaultDurationSeconds: 90,
   },
   {
@@ -423,6 +452,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Adductors', 'Flexibility', 'Turnout'],
     difficulty: 3,
+    level: 'Intermediate',
     defaultDurationSeconds: 90,
   },
   {
@@ -437,6 +467,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Adductors', 'Hip Flexors', 'Flexibility', 'Turnout'],
     difficulty: 1,
+    level: 'Beginner',
     defaultDurationSeconds: 60,
   },
   {
@@ -451,6 +482,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Back', 'Flexibility', 'Posture'],
     difficulty: 2,
+    level: 'Beginner',
     defaultDurationSeconds: 60,
   },
   {
@@ -465,6 +497,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Hip Flexors', 'Flexibility', 'Posture'],
     difficulty: 2,
+    level: 'Beginner',
     defaultDurationSeconds: 60,
   },
   {
@@ -479,6 +512,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Hamstrings', 'Back', 'Flexibility'],
     difficulty: 2,
+    level: 'Beginner',
     defaultDurationSeconds: 60,
   },
   {
@@ -493,6 +527,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Core', 'Shoulders', 'Strength', 'Endurance'],
     difficulty: 2,
+    level: 'Beginner',
     defaultDurationSeconds: 60,
   },
   {
@@ -507,6 +542,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Core', 'Strength', 'Control', 'Endurance'],
     difficulty: 3,
+    level: 'Intermediate',
     defaultDurationSeconds: 45,
   },
   {
@@ -521,6 +557,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Feet', 'Ankles', 'Strength', 'Control'],
     difficulty: 1,
+    level: 'Beginner',
     defaultDurationSeconds: 90,
   },
   {
@@ -535,6 +572,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Calves', 'Feet', 'Ankles', 'Strength'],
     difficulty: 1,
+    level: 'Beginner',
     defaultDurationSeconds: 90,
   },
   {
@@ -549,6 +587,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Calves', 'Ankles', 'Balance', 'Strength'],
     difficulty: 2,
+    level: 'Beginner',
     defaultDurationSeconds: 90,
   },
   {
@@ -563,6 +602,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Glutes', 'Turnout', 'Hip Flexors', 'Strength'],
     difficulty: 2,
+    level: 'Beginner',
     defaultDurationSeconds: 60,
   },
   {
@@ -577,6 +617,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     ],
     trains: ['Core', 'Balance', 'Turnout', 'Control'],
     difficulty: 2,
+    level: 'Beginner',
     defaultDurationSeconds: 60,
   },
 ];
