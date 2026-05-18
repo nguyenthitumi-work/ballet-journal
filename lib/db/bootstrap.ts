@@ -18,7 +18,7 @@ export async function ensureUserBootstrapped(userId: string): Promise<void> {
       {
         user_id: userId,
         name: null,
-        age: null,
+        date_of_birth: null,
         level: 'Beginner',
         streak: 0,
         last_practice_date: null,
