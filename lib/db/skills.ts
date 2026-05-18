@@ -97,3 +97,24 @@ export async function setReferenceUrl(
     .eq('id', skillId);
   if (error) throw new Error(error.message);
 }
+
+/**
+ * Persist the auto-discovered YouTube suggestion. `suggestedUrl` may be null when the
+ * search returned no result — we still stamp `_at` so the lazy fetch does not retry.
+ */
+export async function setReferenceUrlSuggestion(
+  userId: string,
+  skillId: string,
+  suggestedUrl: string | null,
+): Promise<void> {
+  const supabase = await getServerSupabase();
+  const { error } = await supabase
+    .from('skill')
+    .update({
+      reference_url_suggested: suggestedUrl,
+      reference_url_suggested_at: new Date().toISOString(),
+    })
+    .eq('user_id', userId)
+    .eq('id', skillId);
+  if (error) throw new Error(error.message);
+}

@@ -6,12 +6,15 @@ import { updateReferenceUrl } from '../actions';
 interface Props {
   skillId: string;
   initialUrl: string | null;
+  suggestedUrl?: string | null;
 }
 
 const NEXT_REDIRECT_DIGEST = 'NEXT_REDIRECT';
 
-export function ReferenceUrlForm({ skillId, initialUrl }: Props) {
-  const [url, setUrl] = useState(initialUrl ?? '');
+export function ReferenceUrlForm({ skillId, initialUrl, suggestedUrl = null }: Props) {
+  const prefilled = initialUrl ?? suggestedUrl ?? '';
+  const showSuggestionHint = !initialUrl && !!suggestedUrl;
+  const [url, setUrl] = useState(prefilled);
   const [status, setStatus] = useState<'idle' | 'saved' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -94,6 +97,12 @@ export function ReferenceUrlForm({ skillId, initialUrl }: Props) {
       </div>
       {status === 'error' && errorMsg ? (
         <p className="text-xs text-red-700">{errorMsg}</p>
+      ) : null}
+      {showSuggestionHint ? (
+        <p className="text-xs text-violet-700">
+          We found this video on YouTube. A grown-up should preview it, then click Save to
+          add it as the reference video.
+        </p>
       ) : null}
       <p className="text-xs text-violet-900/60">
         Paste a YouTube link (youtube.com or youtu.be). The video shows up here with no

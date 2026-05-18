@@ -5,11 +5,18 @@ interface Props {
   skillId: string;
   skillName: string;
   referenceUrl: string | null;
+  suggestedReferenceUrl?: string | null;
 }
 
-export function ReferenceVideo({ skillId, skillName, referenceUrl }: Props) {
+export function ReferenceVideo({
+  skillId,
+  skillName,
+  referenceUrl,
+  suggestedReferenceUrl = null,
+}: Props) {
   const videoId = referenceUrl ? parseYouTubeId(referenceUrl) : null;
   const searchUrl = youtubeSearchUrl(skillName);
+  const hasUnconfirmedSuggestion = !referenceUrl && !!suggestedReferenceUrl;
 
   return (
     <div className="rounded-2xl border border-violet-200 bg-white p-5 shadow-sm">
@@ -43,12 +50,16 @@ export function ReferenceVideo({ skillId, skillName, referenceUrl }: Props) {
         </p>
       )}
 
-      <details className="mt-4 group">
+      <details className="mt-4 group" open={hasUnconfirmedSuggestion}>
         <summary className="cursor-pointer text-xs font-medium text-violet-700 hover:text-violet-900">
           {referenceUrl ? 'Change link' : 'Add a YouTube link'}
         </summary>
         <div className="mt-3">
-          <ReferenceUrlForm skillId={skillId} initialUrl={referenceUrl} />
+          <ReferenceUrlForm
+            skillId={skillId}
+            initialUrl={referenceUrl}
+            suggestedUrl={suggestedReferenceUrl}
+          />
         </div>
       </details>
     </div>

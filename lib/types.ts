@@ -61,6 +61,8 @@ export interface Skill {
   dateAdded: string;
   lastAttemptedAt: string | null;
   referenceUrl: string | null;
+  referenceUrlSuggested: string | null;
+  referenceUrlSuggestedAt: string | null;
 }
 
 export interface PracticePlan {
@@ -109,6 +111,8 @@ export interface SkillRow {
   date_added: string;
   last_attempted_at: string | null;
   reference_url: string | null;
+  reference_url_suggested: string | null;
+  reference_url_suggested_at: string | null;
 }
 
 export interface SkillCategoryRow {
@@ -176,6 +180,8 @@ export const skillFromRow = (r: SkillRow): Skill => ({
   dateAdded: r.date_added,
   lastAttemptedAt: r.last_attempted_at,
   referenceUrl: r.reference_url,
+  referenceUrlSuggested: r.reference_url_suggested,
+  referenceUrlSuggestedAt: r.reference_url_suggested_at,
 });
 
 export const categoryFromRow = (r: SkillCategoryRow): SkillCategory => ({

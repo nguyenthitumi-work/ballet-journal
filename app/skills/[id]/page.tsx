@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSessionContext } from '@/lib/session';
-import { getSkill, listCategories } from '@/lib/db/skills';
+import { getSkill, listCategories, setReferenceUrlSuggestion } from '@/lib/db/skills';
 import { CATEGORY_LABELS } from '@/lib/types';
+import { fetchFirstYouTubeVideoUrl } from '@/lib/youtube';
 import { DifficultyBadge } from '../_components/Difficulty';
 import { FocusToggle } from '../_components/FocusToggle';
 import { humanizeLastAttempted } from '../_components/lastAttempted';
@@ -55,6 +56,20 @@ export default async function SkillDetailPage(props: SkillDetailPageProps) {
 
   const category = categories.find((c) => c.id === skill.categoryId);
   const categoryLabel = CATEGORY_LABELS[skill.categoryId] ?? category?.name ?? skill.categoryId;
+
+  // Lazy first-view fetch of a YouTube suggestion. Runs only when no manual URL is set
+  // AND we have never tried before. Failures are swallowed so a bad API key or network
+  // hiccup never breaks the page; we just leave the suggestion empty and try again next view.
+  let suggestedReferenceUrl = skill.referenceUrlSuggested;
+  if (skill.referenceUrl === null && skill.referenceUrlSuggestedAt === null) {
+    try {
+      const found = await fetchFirstYouTubeVideoUrl(skill.name);
+      await setReferenceUrlSuggestion(userId, skill.id, found);
+      suggestedReferenceUrl = found;
+    } catch {
+      // Intentionally ignored — see comment above.
+    }
+  }
 
   return (
     <section className="flex flex-col gap-6">
@@ -109,6 +124,7 @@ export default async function SkillDetailPage(props: SkillDetailPageProps) {
         skillId={skill.id}
         skillName={skill.name}
         referenceUrl={skill.referenceUrl}
+        suggestedReferenceUrl={suggestedReferenceUrl}
       />
 
       {skill.trains.length > 0 ? (

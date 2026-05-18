@@ -41,3 +41,37 @@ export function youtubeSearchUrl(query: string): string {
   const params = new URLSearchParams({ search_query: `${query} ballet kids tutorial` });
   return `https://www.youtube.com/results?${params.toString()}`;
 }
+
+interface YouTubeSearchResponse {
+  items?: { id?: { videoId?: string } }[];
+}
+
+/**
+ * Fetch the first YouTube video ID matching the query via the YouTube Data API v3.
+ * Returns null when the API key is missing, the network call fails, or no result is found.
+ * The caller is responsible for caching — this function does no caching itself.
+ */
+export async function fetchFirstYouTubeVideoUrl(query: string): Promise<string | null> {
+  const apiKey = process.env.YOUTUBE_API_KEY;
+  if (!apiKey) return null;
+
+  const params = new URLSearchParams({
+    part: 'snippet',
+    type: 'video',
+    maxResults: '1',
+    safeSearch: 'strict',
+    videoEmbeddable: 'true',
+    q: `${query} ballet kids tutorial`,
+    key: apiKey,
+  });
+
+  const url = `https://www.googleapis.com/youtube/v3/search?${params.toString()}`;
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) {
+    throw new Error(`YouTube API responded ${res.status}`);
+  }
+  const body = (await res.json()) as YouTubeSearchResponse;
+  const id = body.items?.[0]?.id?.videoId;
+  if (!id || !VIDEO_ID_RE.test(id)) return null;
+  return `https://www.youtube.com/watch?v=${id}`;
+}
