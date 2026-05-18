@@ -50,6 +50,20 @@ export default function VideoRecorder({ onChange, disabled = false }: Props) {
   const liveVideoRef = useRef<HTMLVideoElement | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startedAtRef = useRef<number | null>(null);
+
+  // Callback ref: the <video> preview element only mounts once status flips to
+  // 'recording', so we attach the stream the moment React gives us the node.
+  // Using a plain ref + assigning srcObject inside handleStart races the render
+  // and leaves the preview black while the actual recording works fine.
+  const setLiveVideoEl = useCallback((el: HTMLVideoElement | null) => {
+    liveVideoRef.current = el;
+    if (el && streamRef.current && el.srcObject !== streamRef.current) {
+      el.srcObject = streamRef.current;
+      // autoPlay + muted + playsInline normally handles this, but iOS Safari
+      // occasionally needs an explicit nudge.
+      el.play().catch(() => {});
+    }
+  }, []);
   const mediaSupported = useMemo(
     () =>
       typeof navigator !== 'undefined' &&
@@ -100,8 +114,11 @@ export default function VideoRecorder({ onChange, disabled = false }: Props) {
         audio: audioEnabled,
       });
       streamRef.current = stream;
-      if (liveVideoRef.current) {
+      // If the <video> element is already mounted (e.g. re-record), attach
+      // immediately; otherwise setLiveVideoEl will attach on mount.
+      if (liveVideoRef.current && liveVideoRef.current.srcObject !== stream) {
         liveVideoRef.current.srcObject = stream;
+        liveVideoRef.current.play().catch(() => {});
       }
 
       const mimeType = pickMimeType();
@@ -227,7 +244,7 @@ export default function VideoRecorder({ onChange, disabled = false }: Props) {
         <div className="flex flex-col gap-2">
           <div className="relative overflow-hidden rounded-xl bg-black">
             <video
-              ref={liveVideoRef}
+              ref={setLiveVideoEl}
               autoPlay
               muted
               playsInline
