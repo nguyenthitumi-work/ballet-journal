@@ -114,3 +114,90 @@ export async function listAttemptsForSession(sessionId: string): Promise<SkillAt
   if (error) throw new Error(error.message);
   return (data as SkillAttemptRow[]).map(attemptFromRow);
 }
+
+export async function setAttemptVideoPath(args: {
+  userId: string;
+  attemptId: string;
+  videoPath: string;
+  videoSizeBytes: number;
+}): Promise<void> {
+  const supabase = await getServerSupabase();
+  const { error } = await supabase
+    .from('skill_attempt')
+    .update({
+      video_path: args.videoPath,
+      video_size_bytes: args.videoSizeBytes,
+    })
+    .eq('user_id', args.userId)
+    .eq('id', args.attemptId);
+  if (error) throw new Error(error.message);
+}
+
+export async function clearAttemptVideoPath(args: {
+  userId: string;
+  attemptId: string;
+}): Promise<void> {
+  const supabase = await getServerSupabase();
+  const { error } = await supabase
+    .from('skill_attempt')
+    .update({ video_path: null, video_size_bytes: null })
+    .eq('user_id', args.userId)
+    .eq('id', args.attemptId);
+  if (error) throw new Error(error.message);
+}
+
+export async function getAttemptVideoPath(args: {
+  userId: string;
+  attemptId: string;
+}): Promise<string | null> {
+  const supabase = await getServerSupabase();
+  const { data, error } = await supabase
+    .from('skill_attempt')
+    .select('video_path')
+    .eq('user_id', args.userId)
+    .eq('id', args.attemptId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data as { video_path: string | null } | null)?.video_path ?? null;
+}
+
+export async function getUserVideoStats(userId: string): Promise<{
+  videoCount: number;
+  totalBytes: number;
+}> {
+  const supabase = await getServerSupabase();
+  const { data, error } = await supabase
+    .from('skill_attempt')
+    .select('video_size_bytes')
+    .eq('user_id', userId)
+    .not('video_path', 'is', null);
+  if (error) throw new Error(error.message);
+  const rows = (data as { video_size_bytes: number | null }[]) ?? [];
+  return {
+    videoCount: rows.length,
+    totalBytes: rows.reduce((sum, r) => sum + (r.video_size_bytes ?? 0), 0),
+  };
+}
+
+export async function listUserVideoPaths(userId: string): Promise<string[]> {
+  const supabase = await getServerSupabase();
+  const { data, error } = await supabase
+    .from('skill_attempt')
+    .select('video_path')
+    .eq('user_id', userId)
+    .not('video_path', 'is', null);
+  if (error) throw new Error(error.message);
+  return (data as { video_path: string | null }[])
+    .map((r) => r.video_path)
+    .filter((p): p is string => p !== null);
+}
+
+export async function clearAllUserVideoPaths(userId: string): Promise<void> {
+  const supabase = await getServerSupabase();
+  const { error } = await supabase
+    .from('skill_attempt')
+    .update({ video_path: null, video_size_bytes: null })
+    .eq('user_id', userId)
+    .not('video_path', 'is', null);
+  if (error) throw new Error(error.message);
+}

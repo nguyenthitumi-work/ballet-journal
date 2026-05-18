@@ -1,5 +1,6 @@
 import type { PracticeSession, Rating, Skill, SkillAttempt } from '@/lib/types';
 import { CATEGORY_LABELS } from '@/lib/types';
+import AttemptVideo from './AttemptVideo';
 
 type Props = {
   session: PracticeSession;
@@ -148,6 +149,12 @@ export function SessionCard({ session, attempts, skillsById }: Props) {
                 {attempt.notes && attempt.notes.trim() && (
                   <p className="mt-2 text-sm text-violet-900/80">{attempt.notes}</p>
                 )}
+                {attempt.videoPath ? (
+                  <AttemptVideo
+                    attemptId={attempt.id}
+                    videoPath={attempt.videoPath}
+                  />
+                ) : null}
               </div>
             );
           })

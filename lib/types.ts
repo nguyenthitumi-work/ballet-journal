@@ -95,6 +95,8 @@ export interface SkillAttempt {
   isMilestone: boolean;
   attemptedAt: string;
   durationSeconds: number;
+  videoPath: string | null;
+  videoSizeBytes: number | null;
 }
 
 export interface SkillRow {
@@ -164,6 +166,8 @@ export interface SkillAttemptRow {
   is_milestone: boolean;
   attempted_at: string;
   duration_seconds: number;
+  video_path: string | null;
+  video_size_bytes: number | null;
 }
 
 export const skillFromRow = (r: SkillRow): Skill => ({
@@ -233,4 +237,6 @@ export const attemptFromRow = (r: SkillAttemptRow): SkillAttempt => ({
   isMilestone: r.is_milestone,
   attemptedAt: r.attempted_at,
   durationSeconds: r.duration_seconds,
+  videoPath: r.video_path,
+  videoSizeBytes: r.video_size_bytes,
 });

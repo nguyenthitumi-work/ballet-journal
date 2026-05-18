@@ -2,10 +2,14 @@ import { redirect } from 'next/navigation';
 import { getSessionContext } from '@/lib/session';
 import { isOnboarded } from '@/lib/db/profile';
 import { listSkills, listFocusSkills } from '@/lib/db/skills';
-import { listSessions } from '@/lib/db/sessions';
-import { listAttemptsForSession } from '@/lib/db/sessions';
+import {
+  getUserVideoStats,
+  listAttemptsForSession,
+  listSessions,
+} from '@/lib/db/sessions';
 import { listPlans } from '@/lib/db/plans';
 import ProfileForm from './_components/ProfileForm';
+import VideoStorageStats from './_components/VideoStorageStats';
 
 const sectionHeading = 'text-lg font-semibold text-violet-900 mb-3';
 const card = 'rounded-2xl border border-violet-200 bg-white p-5 shadow-sm';
@@ -31,11 +35,12 @@ export default async function SettingsPage() {
     redirect('/onboarding');
   }
 
-  const [skills, focusSkills, plans, sessions] = await Promise.all([
+  const [skills, focusSkills, plans, sessions, videoStats] = await Promise.all([
     listSkills(userId),
     listFocusSkills(userId),
     listPlans(userId),
     listSessions(userId),
+    getUserVideoStats(userId),
   ]);
 
   const attemptsBySession = await Promise.all(
@@ -65,6 +70,12 @@ export default async function SettingsPage() {
           <Stat label="Plans" value={plans.length} />
           <Stat label="Completed sessions" value={sessions.length} />
           <Stat label="Total attempts" value={totalAttempts} />
+        </div>
+        <div className="mt-3">
+          <VideoStorageStats
+            initialVideoCount={videoStats.videoCount}
+            initialTotalBytes={videoStats.totalBytes}
+          />
         </div>
       </section>
 

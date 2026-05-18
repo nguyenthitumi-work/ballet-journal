@@ -2,9 +2,16 @@
 
 import { revalidatePath } from 'next/cache';
 import { getSessionContext } from '@/lib/session';
+import { getServerSupabase } from '@/lib/supabase/server';
 import { updateProfile } from '@/lib/db/profile';
+import {
+  clearAllUserVideoPaths,
+  listUserVideoPaths,
+} from '@/lib/db/sessions';
 import { isValidDateOfBirth, MIN_AGE, MAX_AGE } from '@/lib/age';
 import type { Level } from '@/lib/types';
+
+const VIDEO_BUCKET = 'practice-videos';
 
 const VALID_LEVELS: readonly Level[] = ['Beginner', 'Intermediate', 'Advanced'] as const;
 
@@ -46,4 +53,22 @@ export async function updateProfileAction(
   revalidatePath('/');
 
   return { ok: true };
+}
+
+export async function deleteAllVideosForUser(): Promise<{ deleted: number }> {
+  const { userId } = await getSessionContext();
+  const paths = await listUserVideoPaths(userId);
+  if (paths.length === 0) return { deleted: 0 };
+
+  const supabase = await getServerSupabase();
+  const { error: removeError } = await supabase.storage
+    .from(VIDEO_BUCKET)
+    .remove(paths);
+  if (removeError) throw new Error(removeError.message);
+
+  await clearAllUserVideoPaths(userId);
+
+  revalidatePath('/settings');
+  revalidatePath('/history');
+  return { deleted: paths.length };
 }

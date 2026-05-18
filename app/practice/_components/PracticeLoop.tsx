@@ -1,8 +1,14 @@
 'use client';
 
-import { useEffect, useState, useTransition } from 'react';
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 
-import { submitAttempt } from '../actions';
+import {
+  buildVideoPath,
+  deleteVideoBlob,
+  uploadVideoBlob,
+} from '@/lib/storage/videos';
+import { attachVideoToAttempt, submitAttempt } from '../actions';
+import VideoRecorder, { type RecordedClip } from './VideoRecorder';
 
 type CurrentSkill = {
   id: string;
@@ -15,12 +21,15 @@ type CurrentSkill = {
 };
 
 interface Props {
+  userId: string;
   sessionId: string;
   currentSkill: CurrentSkill;
   remainingSkills: { id: string; name: string }[];
   attemptsCount: number;
   totalSkillsCount: number;
 }
+
+type UploadStatus = 'idle' | 'uploading' | 'uploaded' | 'failed';
 
 const RATINGS: { value: 1 | 2 | 3 | 4 | 5; label: string }[] = [
   { value: 1, label: 'Tough' },
@@ -41,6 +50,7 @@ function formatMmSs(totalSeconds: number): string {
 }
 
 export default function PracticeLoop({
+  userId,
   sessionId,
   currentSkill,
   remainingSkills,
@@ -51,19 +61,87 @@ export default function PracticeLoop({
   const [notes, setNotes] = useState('');
   const [isMilestone, setIsMilestone] = useState(false);
   const [tipsOpen, setTipsOpen] = useState(false);
-  const [recording, setRecording] = useState(false);
+  const [recordedClip, setRecordedClip] = useState<RecordedClip | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<UploadStatus>('idle');
   const [seconds, setSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  // Parent passes `key={currentSkill.id}` so a skill change remounts this
-  // component — useState above gives fresh initial values without an effect.
+  // Refs track the in-flight upload across re-renders. The handler closures
+  // would otherwise capture stale state.
+  const uploadPathRef = useRef<string | null>(null);
+  const uploadPromiseRef = useRef<Promise<void> | null>(null);
+  const savedSuccessfullyRef = useRef(false);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setSeconds((prev) => prev + 1);
     }, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // On unmount: if we uploaded a video but never attached it (user navigated
+  // away mid-flow), clean it up. Skipped after a successful Save & next.
+  useEffect(() => {
+    return () => {
+      const path = uploadPathRef.current;
+      const promise = uploadPromiseRef.current;
+      if (path && !savedSuccessfullyRef.current) {
+        Promise.resolve(promise)
+          .catch(() => undefined)
+          .then(() => deleteVideoBlob(path))
+          .catch(() => undefined);
+      }
+    };
+  }, []);
+
+  const handleClipChange = useCallback(
+    (newClip: RecordedClip | null) => {
+      // Tear down the previous upload (if any). This covers re-record and
+      // discard; both want the prior file gone from storage once it settles.
+      const prevPath = uploadPathRef.current;
+      const prevPromise = uploadPromiseRef.current;
+      uploadPathRef.current = null;
+      uploadPromiseRef.current = null;
+      if (prevPath) {
+        Promise.resolve(prevPromise)
+          .catch(() => undefined)
+          .then(() => deleteVideoBlob(prevPath))
+          .catch(() => undefined);
+      }
+
+      if (newClip === null) {
+        setRecordedClip(null);
+        setUploadStatus('idle');
+        return;
+      }
+
+      setRecordedClip(newClip);
+      setUploadStatus('uploading');
+      setError(null);
+
+      const path = buildVideoPath(userId, newClip.blob.type);
+      uploadPathRef.current = path;
+
+      uploadPromiseRef.current = uploadVideoBlob(path, newClip.blob).then(
+        () => {
+          if (uploadPathRef.current === path) setUploadStatus('uploaded');
+        },
+        (err: unknown) => {
+          if (uploadPathRef.current === path) {
+            setUploadStatus('failed');
+            setError(
+              `Video upload failed: ${
+                err instanceof Error ? err.message : 'unknown error'
+              }. You can re-record or save without it.`,
+            );
+          }
+          throw err;
+        },
+      );
+    },
+    [userId],
+  );
 
   const stepNumber = attemptsCount + 1;
   const progressLabel = `${stepNumber} of ${totalSkillsCount}`;
@@ -77,7 +155,7 @@ export default function PracticeLoop({
 
     startTransition(async () => {
       try {
-        await submitAttempt({
+        const { attemptId } = await submitAttempt({
           sessionId,
           skillId: currentSkill.id,
           rating,
@@ -85,6 +163,33 @@ export default function PracticeLoop({
           isMilestone,
           durationSeconds: seconds,
         });
+
+        if (recordedClip) {
+          const uploadPromise = uploadPromiseRef.current;
+          const path = uploadPathRef.current;
+          if (uploadPromise && path) {
+            try {
+              await uploadPromise;
+              await attachVideoToAttempt({
+                attemptId,
+                videoPath: path,
+                videoSizeBytes: recordedClip.blob.size,
+              });
+            } catch (uploadErr) {
+              const msg =
+                uploadErr instanceof Error ? uploadErr.message : 'unknown error';
+              setError(
+                `Practice was saved, but the video upload did not finish (${msg}).`,
+              );
+              // Don't rethrow — practice was logged; we just lost the video.
+              // Still consider the page "saved successfully" so the orphan
+              // cleanup doesn't fire on the path we just told the server about
+              // (the attach failed, so the file is already an orphan anyway).
+            }
+          }
+        }
+
+        savedSuccessfullyRef.current = true;
       } catch (err) {
         if (err instanceof Error) {
           const digest = (err as Error & { digest?: string }).digest;
@@ -98,6 +203,12 @@ export default function PracticeLoop({
       }
     });
   };
+
+  const saveLabel = (() => {
+    if (!isPending) return 'Save & next';
+    if (recordedClip && uploadStatus === 'uploading') return 'Uploading video…';
+    return 'Saving…';
+  })();
 
   return (
     <section className="flex flex-col gap-6">
@@ -199,20 +310,22 @@ export default function PracticeLoop({
           </span>
         </label>
 
-        <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={() => setRecording((v) => !v)}
-            className="self-start rounded-full border border-dashed border-violet-300 px-4 py-2 text-sm text-violet-700 hover:border-violet-500"
-          >
-            {recording ? 'Stop video (preview)' : 'Tap to record video (coming soon)'}
-          </button>
-          {recording ? (
-            <div className="flex h-32 items-center justify-center rounded-xl border-2 border-dashed border-violet-300 bg-violet-50 text-sm text-violet-700">
-              Video recording will land in a later update.
-            </div>
-          ) : null}
-        </div>
+        <VideoRecorder onChange={handleClipChange} disabled={isPending} />
+
+        {recordedClip && uploadStatus === 'uploading' ? (
+          <p className="text-xs text-violet-900/60">
+            Uploading video to your account…
+          </p>
+        ) : null}
+        {recordedClip && uploadStatus === 'uploaded' ? (
+          <p className="text-xs text-emerald-700">Video ready.</p>
+        ) : null}
+        {recordedClip && uploadStatus === 'failed' ? (
+          <p className="text-xs text-red-700">
+            Video upload failed. You can re-record above, or tap Save & next to
+            save without it.
+          </p>
+        ) : null}
       </div>
 
       {remainingSkills.length > 0 ? (
@@ -247,7 +360,7 @@ export default function PracticeLoop({
           disabled={isPending || rating === null}
           className={PRIMARY_BTN_CLASS}
         >
-          {isPending ? 'Saving…' : 'Save & next'}
+          {saveLabel}
         </button>
       </div>
     </section>

@@ -152,6 +152,7 @@ export default async function PracticeSessionPage(props: {
   return (
     <PracticeLoop
       key={currentSkill.id}
+      userId={userId}
       sessionId={sessionId}
       currentSkill={serializeSkill(currentSkill)}
       remainingSkills={remainingSkills}

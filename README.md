@@ -9,14 +9,15 @@ Built for one specific 10-year-old first, then generalizable later.
 - Browse 33 seeded skills across Barre / Center / Jumps / Turns / Stretches / Conditioning
 - Mark skills as "currently working on"
 - Run a structured practice session: cycle through chosen skills, rate each, note each, star milestones
+- Optional per-skill video recording (camera + optional mic). Clips upload in the
+  background to a private Supabase Storage bucket and play back from History via
+  5-minute signed URLs. Settings shows total usage and lets you bulk-delete.
 - Streak counter (soft, no shaming), history view, settings
 - 4 built-in practice plans: Quick Barre, Stretch & Strengthen, Center Practice, Jumps & Turns
 - Daily "Today's practice" suggestion that weights focus skills and stale skills
 
 ## What's stubbed (intentionally)
 
-- **Video recording.** Web supports `MediaRecorder` natively but v1 keeps the loop journal-only.
-  Lands later via IndexedDB-local storage so a child's video never leaves the device.
 - **Pose detection.** Lands later via MediaPipe (Apache 2.0, client-side) once the journaling habit is set.
 
 ## Stack
@@ -26,6 +27,8 @@ Built for one specific 10-year-old first, then generalizable later.
 - **TypeScript**
 - **Tailwind CSS v4**
 - **Supabase Postgres** (free tier) for journal data
+- **Supabase Storage** (free tier, 1 GB) for practice videos. Private bucket; objects
+  scoped to the user's UUID folder via storage RLS; playback via short-lived signed URLs.
 - **Supabase Auth** — magic link sign-in. Each user has their own profile/skills/history
   scoped by `user_id`. RLS enforces per-user isolation in the database.
 - **Vercel** for hosting (free tier, deploys on git push)
@@ -45,6 +48,12 @@ Apply every file under `supabase/migrations/` in chronological order via the SQL
 1. `20260515000000_initial.sql` — base schema (tables, indexes, triggers, seeded categories).
 2. `20260516000000_add_skill_reference_url.sql` — adds the YouTube reference URL column.
 3. `20260517000000_add_auth.sql` — adds `user_id` columns and RLS for Supabase Auth.
+4. `20260517010000_add_skill_trains.sql` — adds the `trains` array column on skills.
+5. `20260517020000_add_skill_reference_url_suggested.sql` — adds the suggested-URL columns.
+6. `20260517030000_profile_date_of_birth.sql` — replaces `age` with `date_of_birth`.
+7. `20260517040000_add_attempt_video.sql` — adds `video_path` + `video_size_bytes`
+   on `skill_attempt`, creates the private `practice-videos` bucket, and adds
+   storage RLS policies scoping objects to the user's UUID folder.
 
 ### 2.5. Configure Supabase Auth
 
@@ -184,7 +193,6 @@ even if the app code is wrong — defense in depth at the database level.
 
 ## Roadmap (post-v1)
 
-- Real video recording → IndexedDB locally (no upload, no privacy footprint)
 - Side-by-side video compare
 - Calendar grid view in History
 - Smarter daily suggestion (per-day-of-week templates)

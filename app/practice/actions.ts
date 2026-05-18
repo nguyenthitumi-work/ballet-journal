@@ -3,7 +3,12 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getSessionContext } from '@/lib/session';
-import { endSession, recordAttempt, startSession } from '@/lib/db/sessions';
+import {
+  endSession,
+  recordAttempt,
+  setAttemptVideoPath,
+  startSession,
+} from '@/lib/db/sessions';
 import { getProfile, setStreak } from '@/lib/db/profile';
 import { computeNewStreak, formatLocalDate } from '@/lib/services/streak';
 import type { Rating } from '@/lib/types';
@@ -37,7 +42,7 @@ export async function submitAttempt(args: {
   notes: string;
   isMilestone: boolean;
   durationSeconds: number;
-}): Promise<void> {
+}): Promise<{ attemptId: string }> {
   const { sessionId, skillId, rating, notes, isMilestone, durationSeconds } = args;
 
   if (typeof sessionId !== 'string' || sessionId.length === 0) {
@@ -56,7 +61,7 @@ export async function submitAttempt(args: {
   const trimmedNotes = notes.trim();
   const { userId } = await getSessionContext();
 
-  await recordAttempt({
+  const attempt = await recordAttempt({
     userId,
     sessionId,
     skillId,
@@ -67,6 +72,41 @@ export async function submitAttempt(args: {
   });
 
   revalidatePath(`/practice/${sessionId}`);
+  return { attemptId: attempt.id };
+}
+
+export async function attachVideoToAttempt(args: {
+  attemptId: string;
+  videoPath: string;
+  videoSizeBytes: number;
+}): Promise<void> {
+  const { attemptId, videoPath, videoSizeBytes } = args;
+
+  if (typeof attemptId !== 'string' || attemptId.length === 0) {
+    throw new Error('Missing attempt id.');
+  }
+  if (typeof videoPath !== 'string' || videoPath.length === 0) {
+    throw new Error('Missing video path.');
+  }
+  if (!Number.isFinite(videoSizeBytes) || videoSizeBytes < 0) {
+    throw new Error('Invalid video size.');
+  }
+
+  const { userId } = await getSessionContext();
+
+  // Defense in depth: storage RLS enforces the same constraint, but reject any
+  // path whose first segment isn't this user's UID before touching the DB.
+  const firstSegment = videoPath.split('/')[0];
+  if (firstSegment !== userId) {
+    throw new Error('Video path does not belong to this user.');
+  }
+
+  await setAttemptVideoPath({
+    userId,
+    attemptId,
+    videoPath,
+    videoSizeBytes: Math.floor(videoSizeBytes),
+  });
 }
 
 export async function finishSession(
