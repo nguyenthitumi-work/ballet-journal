@@ -3,11 +3,10 @@
 import { useState, useTransition } from 'react';
 import type { FormEvent } from 'react';
 import type { Level } from '@/lib/types';
+import { computeAge, isValidDateOfBirth, MIN_AGE, MAX_AGE } from '@/lib/age';
 import { submitOnboarding } from './actions';
 
 const LEVELS: Level[] = ['Beginner', 'Intermediate', 'Advanced'];
-const MIN_AGE = 3;
-const MAX_AGE = 120;
 
 const LEVEL_HINTS: Record<Level, string> = {
   Beginner: 'Just starting out',
@@ -17,24 +16,31 @@ const LEVEL_HINTS: Record<Level, string> = {
 
 interface Props {
   initialName: string;
-  initialAge: number | '';
+  initialDateOfBirth: string;
   initialLevel: Level;
 }
 
 const inputClass =
   'w-full rounded-lg border border-violet-200 px-3 py-2 focus:border-violet-500 focus:outline-none';
 
-export default function OnboardingForm({ initialName, initialAge, initialLevel }: Props) {
+export default function OnboardingForm({
+  initialName,
+  initialDateOfBirth,
+  initialLevel,
+}: Props) {
   const [name, setName] = useState<string>(initialName);
-  const [age, setAge] = useState<number | ''>(initialAge);
+  const [dateOfBirth, setDateOfBirth] = useState<string>(initialDateOfBirth);
   const [level, setLevel] = useState<Level>(initialLevel);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  const derivedAge = computeAge(dateOfBirth || null);
+
   const validate = (): string | null => {
     if (name.trim().length === 0) return 'Please tell us your name.';
-    if (age === '' || !Number.isInteger(age) || age < MIN_AGE || age > MAX_AGE) {
-      return `Age must be a whole number between ${MIN_AGE} and ${MAX_AGE}.`;
+    if (!dateOfBirth) return 'Please pick your birthday.';
+    if (!isValidDateOfBirth(dateOfBirth)) {
+      return `Birthday must be a real past date and put your age between ${MIN_AGE} and ${MAX_AGE}.`;
     }
     if (!LEVELS.includes(level)) return 'Please pick a level.';
     return null;
@@ -51,7 +57,7 @@ export default function OnboardingForm({ initialName, initialAge, initialLevel }
 
     const formData = new FormData();
     formData.set('name', name.trim());
-    formData.set('age', String(age));
+    formData.set('dateOfBirth', dateOfBirth);
     formData.set('level', level);
 
     startTransition(async () => {
@@ -96,28 +102,29 @@ export default function OnboardingForm({ initialName, initialAge, initialLevel }
       </section>
 
       <section className="rounded-2xl border border-violet-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-medium">How old are you?</h2>
-        <p className="mt-1 text-sm text-violet-900/70">So we can pick the right skills for you.</p>
-        <label htmlFor="age" className="sr-only">
-          Age
+        <h2 className="text-lg font-medium">When is your birthday?</h2>
+        <p className="mt-1 text-sm text-violet-900/70">
+          So we can pick the right skills for you. We&apos;ll figure out your age from this.
+        </p>
+        <label htmlFor="dateOfBirth" className="sr-only">
+          Birthday
         </label>
         <input
-          id="age"
-          name="age"
-          type="number"
-          inputMode="numeric"
-          min={MIN_AGE}
-          max={MAX_AGE}
-          value={age}
-          onChange={(e) => {
-            const v = e.target.value;
-            setAge(v === '' ? '' : Number(v));
-          }}
-          placeholder="10"
+          id="dateOfBirth"
+          name="dateOfBirth"
+          type="date"
+          value={dateOfBirth}
+          onChange={(e) => setDateOfBirth(e.target.value)}
           className={`${inputClass} mt-4`}
           disabled={isPending}
           required
         />
+        {derivedAge !== null ? (
+          <p className="mt-2 text-sm text-violet-900/70">
+            That makes you <span className="font-medium text-violet-900">{derivedAge}</span>{' '}
+            years old today.
+          </p>
+        ) : null}
       </section>
 
       <section className="rounded-2xl border border-violet-200 bg-white p-6 shadow-sm">

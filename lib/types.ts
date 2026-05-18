@@ -39,7 +39,7 @@ export interface SkillCategory {
 export interface UserProfile {
   userId: string;
   name: string | null;
-  age: number | null;
+  dateOfBirth: string | null;
   level: Level;
   streak: number;
   lastPracticeDate: string | null;
@@ -126,7 +126,7 @@ export interface SkillCategoryRow {
 export interface UserProfileRow {
   user_id: string;
   name: string | null;
-  age: number | null;
+  date_of_birth: string | null;
   level: Level;
   streak: number;
   last_practice_date: string | null;
@@ -195,7 +195,7 @@ export const categoryFromRow = (r: SkillCategoryRow): SkillCategory => ({
 export const profileFromRow = (r: UserProfileRow): UserProfile => ({
   userId: r.user_id,
   name: r.name,
-  age: r.age,
+  dateOfBirth: r.date_of_birth,
   level: r.level,
   streak: r.streak,
   lastPracticeDate: r.last_practice_date,

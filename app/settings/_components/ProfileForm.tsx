@@ -3,11 +3,10 @@
 import { useState, useTransition } from 'react';
 import type { FormEvent } from 'react';
 import type { Level, UserProfile } from '@/lib/types';
+import { computeAge, isValidDateOfBirth, MIN_AGE, MAX_AGE } from '@/lib/age';
 import { updateProfileAction } from '../actions';
 
 const LEVELS: Level[] = ['Beginner', 'Intermediate', 'Advanced'];
-const MIN_AGE = 3;
-const MAX_AGE = 120;
 
 const LEVEL_HINTS: Record<Level, string> = {
   Beginner: 'Just starting out',
@@ -24,16 +23,19 @@ interface Props {
 
 export default function ProfileForm({ initialProfile }: Props) {
   const [name, setName] = useState<string>(initialProfile.name ?? '');
-  const [age, setAge] = useState<number | ''>(initialProfile.age ?? '');
+  const [dateOfBirth, setDateOfBirth] = useState<string>(initialProfile.dateOfBirth ?? '');
   const [level, setLevel] = useState<Level>(initialProfile.level);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
 
+  const derivedAge = computeAge(dateOfBirth || null);
+
   const validate = (): string | null => {
     if (name.trim().length === 0) return 'Please tell us your name.';
-    if (age === '' || !Number.isInteger(age) || age < MIN_AGE || age > MAX_AGE) {
-      return `Age must be a whole number between ${MIN_AGE} and ${MAX_AGE}.`;
+    if (!dateOfBirth) return 'Please pick your birthday.';
+    if (!isValidDateOfBirth(dateOfBirth)) {
+      return `Birthday must be a real past date and put your age between ${MIN_AGE} and ${MAX_AGE}.`;
     }
     if (!LEVELS.includes(level)) return 'Please pick a level.';
     return null;
@@ -52,7 +54,7 @@ export default function ProfileForm({ initialProfile }: Props) {
 
     const formData = new FormData();
     formData.set('name', name.trim());
-    formData.set('age', String(age));
+    formData.set('dateOfBirth', dateOfBirth);
     formData.set('level', level);
 
     startTransition(async () => {
@@ -93,27 +95,27 @@ export default function ProfileForm({ initialProfile }: Props) {
       </div>
 
       <div>
-        <label htmlFor="age" className="text-sm font-medium text-violet-900">
-          Age
+        <label htmlFor="dateOfBirth" className="text-sm font-medium text-violet-900">
+          Birthday
         </label>
         <input
-          id="age"
-          name="age"
-          type="number"
-          inputMode="numeric"
-          min={MIN_AGE}
-          max={MAX_AGE}
-          value={age}
+          id="dateOfBirth"
+          name="dateOfBirth"
+          type="date"
+          value={dateOfBirth}
           onChange={(e) => {
-            const v = e.target.value;
-            setAge(v === '' ? '' : Number(v));
+            setDateOfBirth(e.target.value);
             setSaved(false);
           }}
-          placeholder="10"
           className={`${inputClass} mt-1`}
           disabled={isPending}
           required
         />
+        {derivedAge !== null ? (
+          <p className="mt-1 text-sm text-violet-900/70">
+            Age today: <span className="font-medium text-violet-900">{derivedAge}</span>
+          </p>
+        ) : null}
       </div>
 
       <fieldset className="flex flex-col gap-2">

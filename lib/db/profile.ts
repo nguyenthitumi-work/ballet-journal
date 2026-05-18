@@ -17,12 +17,12 @@ export async function getProfile(userId: string): Promise<UserProfile | null> {
 
 export async function updateProfile(
   userId: string,
-  patch: Partial<Pick<UserProfile, 'name' | 'age' | 'level'>>,
+  patch: Partial<Pick<UserProfile, 'name' | 'dateOfBirth' | 'level'>>,
 ): Promise<UserProfile> {
   const supabase = await getServerSupabase();
   const row: Record<string, unknown> = {};
   if (patch.name !== undefined) row.name = patch.name;
-  if (patch.age !== undefined) row.age = patch.age;
+  if (patch.dateOfBirth !== undefined) row.date_of_birth = patch.dateOfBirth;
   if (patch.level !== undefined) row.level = patch.level;
 
   const { data, error } = await supabase
@@ -52,7 +52,7 @@ export function isOnboarded(p: UserProfile | null): boolean {
   return Boolean(
     p &&
       p.name &&
-      p.age &&
+      p.dateOfBirth &&
       (['Beginner', 'Intermediate', 'Advanced'] as Level[]).includes(p.level),
   );
 }

@@ -11,7 +11,7 @@ export default async function OnboardingPage() {
   }
 
   const initialName = profile.name ?? '';
-  const initialAge: number | '' = profile.age ?? '';
+  const initialDateOfBirth: string = profile.dateOfBirth ?? '';
   const initialLevel: Level = profile.level ?? 'Intermediate';
 
   return (
@@ -25,7 +25,7 @@ export default async function OnboardingPage() {
 
       <OnboardingForm
         initialName={initialName}
-        initialAge={initialAge}
+        initialDateOfBirth={initialDateOfBirth}
         initialLevel={initialLevel}
       />
     </section>

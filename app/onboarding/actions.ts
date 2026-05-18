@@ -3,11 +3,10 @@
 import { redirect } from 'next/navigation';
 import { getSessionContext } from '@/lib/session';
 import { updateProfile } from '@/lib/db/profile';
+import { isValidDateOfBirth, MIN_AGE, MAX_AGE } from '@/lib/age';
 import type { Level } from '@/lib/types';
 
 const VALID_LEVELS: readonly Level[] = ['Beginner', 'Intermediate', 'Advanced'] as const;
-const MIN_AGE = 3;
-const MAX_AGE = 120;
 
 function isLevel(value: string): value is Level {
   return (VALID_LEVELS as readonly string[]).includes(value);
@@ -15,7 +14,7 @@ function isLevel(value: string): value is Level {
 
 export async function submitOnboarding(formData: FormData): Promise<void> {
   const rawName = formData.get('name');
-  const rawAge = formData.get('age');
+  const rawDob = formData.get('dateOfBirth');
   const rawLevel = formData.get('level');
 
   const name = typeof rawName === 'string' ? rawName.trim() : '';
@@ -23,13 +22,14 @@ export async function submitOnboarding(formData: FormData): Promise<void> {
     throw new Error('Please tell us your name.');
   }
 
-  const ageStr = typeof rawAge === 'string' ? rawAge.trim() : '';
-  if (ageStr.length === 0) {
-    throw new Error('Please enter your age.');
+  const dateOfBirth = typeof rawDob === 'string' ? rawDob.trim() : '';
+  if (dateOfBirth.length === 0) {
+    throw new Error('Please pick your birthday.');
   }
-  const age = Number(ageStr);
-  if (!Number.isInteger(age) || age < MIN_AGE || age > MAX_AGE) {
-    throw new Error(`Age must be a whole number between ${MIN_AGE} and ${MAX_AGE}.`);
+  if (!isValidDateOfBirth(dateOfBirth)) {
+    throw new Error(
+      `Birthday must be a real past date and put your age between ${MIN_AGE} and ${MAX_AGE}.`,
+    );
   }
 
   const levelStr = typeof rawLevel === 'string' ? rawLevel : '';
@@ -38,7 +38,7 @@ export async function submitOnboarding(formData: FormData): Promise<void> {
   }
 
   const { userId } = await getSessionContext();
-  await updateProfile(userId, { name, age, level: levelStr });
+  await updateProfile(userId, { name, dateOfBirth, level: levelStr });
 
   redirect('/');
 }
