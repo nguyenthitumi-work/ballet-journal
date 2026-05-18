@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { getVideoSignedUrl } from '@/lib/storage/videos';
 import { deleteVideoForAttempt } from '../actions';
-import PoseOverlay from './PoseOverlay';
+import PoseOverlay from '@/components/PoseOverlay';
 
 interface Props {
   attemptId: string;

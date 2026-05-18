@@ -173,7 +173,7 @@ export default async function SkillDetailPage(props: SkillDetailPageProps) {
         <p className="mt-1 text-violet-950">{humanizeLastAttempted(skill.lastAttemptedAt)}</p>
       </div>
 
-      <AttemptsTimeline attempts={attempts} />
+      <AttemptsTimeline attempts={attempts} referenceUrl={skill.referenceUrl} />
     </section>
   );
 }

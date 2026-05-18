@@ -14,6 +14,12 @@ Built for one specific 10-year-old first, then generalizable later.
   5-minute signed URLs. Settings shows total usage and lets you bulk-delete.
 - Streak counter (soft, no shaming), history view, settings
 - 4 built-in practice plans: Quick Barre, Stretch & Strengthen, Center Practice, Jumps & Turns
+- Side-by-side compare of two of your own attempts on each skill's history page
+  (tick two attempts to see them in a Before · After grid with media and notes)
+- Compare any recorded attempt against the skill's YouTube reference video.
+  Shared Play / Pause / Restart for both clips and a 0.5× / 0.75× / 1× speed
+  selector. Optional skeleton overlay on your own clip (the YouTube side
+  can't be overlaid — cross-origin iframe + ToS).
 - Daily "Today's practice" suggestion that weights focus skills and stale skills,
   with a soft per-day-of-week theme (Mon Barre · Tue Center · Wed Jumps+Turns ·
   Thu Stretches+Conditioning · Fri Focus · Sat Full mix · Sun Stretches)
@@ -203,7 +209,6 @@ even if the app code is wrong — defense in depth at the database level.
 
 ## Roadmap (post-v1)
 
-- Side-by-side video compare (her clip alongside the skill's YouTube reference, both with skeleton overlay)
 - Calendar grid view in History
 - Phase-2 pose: one objective metric per skill (e.g. turnout angle, plié depth) shown as a number, not a critique
 - iPad support if she wants it (would add Supabase Auth + RLS at that point)

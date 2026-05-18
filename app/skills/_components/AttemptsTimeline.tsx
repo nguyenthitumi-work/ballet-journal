@@ -2,10 +2,13 @@
 
 import { useMemo, useState } from 'react';
 import type { Rating, SkillAttempt } from '@/lib/types';
+import { parseYouTubeId } from '@/lib/youtube';
 import AttemptMedia from './AttemptMedia';
+import ReferenceCompare from './ReferenceCompare';
 
 interface Props {
   attempts: SkillAttempt[];
+  referenceUrl?: string | null;
 }
 
 const TZ = 'America/Los_Angeles';
@@ -42,15 +45,22 @@ function MilestonePill() {
   );
 }
 
-export function AttemptsTimeline({ attempts }: Props) {
+export function AttemptsTimeline({ attempts, referenceUrl = null }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<string[]>([]);
+  const [compareWithRefId, setCompareWithRefId] = useState<string | null>(null);
 
   const byId = useMemo(() => {
     const m = new Map<string, SkillAttempt>();
     for (const a of attempts) m.set(a.id, a);
     return m;
   }, [attempts]);
+
+  const referenceVideoId = useMemo(
+    () => (referenceUrl ? parseYouTubeId(referenceUrl) : null),
+    [referenceUrl],
+  );
+  const compareAttempt = compareWithRefId ? byId.get(compareWithRefId) ?? null : null;
 
   if (attempts.length === 0) {
     return (
@@ -101,6 +111,16 @@ export function AttemptsTimeline({ attempts }: Props) {
           {attempts.length} {attempts.length === 1 ? 'attempt' : 'attempts'}
         </span>
       </div>
+
+      {compareAttempt?.videoPath && referenceVideoId ? (
+        <div className="mt-4">
+          <ReferenceCompare
+            videoPath={compareAttempt.videoPath}
+            youtubeVideoId={referenceVideoId}
+            onClose={() => setCompareWithRefId(null)}
+          />
+        </div>
+      ) : null}
 
       {comparePair.length === 2 ? (
         <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50/40 p-3">
@@ -177,16 +197,32 @@ export function AttemptsTimeline({ attempts }: Props) {
                     {a.photoPath ? <span aria-label="Has photo">📷 Photo</span> : null}
                     {a.notes ? <span className="line-clamp-1 italic">&ldquo;{a.notes}&rdquo;</span> : null}
                   </div>
-                  {hasMedia || a.notes ? (
-                    <button
-                      type="button"
-                      onClick={() => toggleExpand(a.id)}
-                      className="self-start text-xs font-medium text-violet-700 hover:text-violet-900 hover:underline"
-                      aria-expanded={isOpen}
-                    >
-                      {isOpen ? 'Hide details' : 'Show details'}
-                    </button>
-                  ) : null}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    {hasMedia || a.notes ? (
+                      <button
+                        type="button"
+                        onClick={() => toggleExpand(a.id)}
+                        className="text-xs font-medium text-violet-700 hover:text-violet-900 hover:underline"
+                        aria-expanded={isOpen}
+                      >
+                        {isOpen ? 'Hide details' : 'Show details'}
+                      </button>
+                    ) : null}
+                    {a.videoPath && referenceVideoId ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCompareWithRefId((prev) => (prev === a.id ? null : a.id))
+                        }
+                        aria-pressed={compareWithRefId === a.id}
+                        className="text-xs font-medium text-violet-700 hover:text-violet-900 hover:underline"
+                      >
+                        {compareWithRefId === a.id
+                          ? 'Hide compare'
+                          : 'Compare with reference'}
+                      </button>
+                    ) : null}
+                  </div>
                   {isOpen ? (
                     <div className="mt-2 flex flex-col gap-2">
                       {hasMedia ? (

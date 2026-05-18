@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const MAX_DURATION_SECONDS = 5 * 60;
+const CANVAS_FPS = 30;
 
 type Status = 'idle' | 'requesting' | 'recording' | 'reviewing';
+type Facing = 'user' | 'environment';
 
 export interface RecordedClip {
   blob: Blob;
@@ -37,33 +39,89 @@ function formatMmSs(totalSeconds: number): string {
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 }
 
+// Draw a video frame onto a fixed-size canvas, preserving aspect ratio
+// (letterbox/pillarbox). Canvas dimensions stay fixed across camera flips so
+// the MediaRecorder track resolution doesn't change mid-recording.
+function drawVideoFit(
+  ctx: CanvasRenderingContext2D,
+  video: HTMLVideoElement,
+  canvasW: number,
+  canvasH: number,
+): void {
+  const vw = video.videoWidth;
+  const vh = video.videoHeight;
+  if (!vw || !vh) {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvasW, canvasH);
+    return;
+  }
+  const cAspect = canvasW / canvasH;
+  const vAspect = vw / vh;
+  let dw: number;
+  let dh: number;
+  if (vAspect > cAspect) {
+    dw = canvasW;
+    dh = canvasW / vAspect;
+  } else {
+    dh = canvasH;
+    dw = canvasH * vAspect;
+  }
+  const dx = (canvasW - dw) / 2;
+  const dy = (canvasH - dh) / 2;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, canvasW, canvasH);
+  ctx.drawImage(video, dx, dy, dw, dh);
+}
+
+async function waitForVideoMetadata(video: HTMLVideoElement): Promise<void> {
+  if (video.readyState >= 1 && video.videoWidth > 0) return;
+  await new Promise<void>((resolve) => {
+    const onLoaded = () => {
+      video.removeEventListener('loadedmetadata', onLoaded);
+      resolve();
+    };
+    video.addEventListener('loadedmetadata', onLoaded);
+  });
+}
+
 export default function VideoRecorder({ onChange, disabled = false }: Props) {
   const [status, setStatus] = useState<Status>('idle');
   const [audioEnabled, setAudioEnabled] = useState(false);
+  const [facing, setFacing] = useState<Facing>('user');
+  const [flipping, setFlipping] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
 
+  // Camera + recording pipeline refs.
+  // Data flow:
+  //   camera → srcVideoEl (offscreen) → RAF → canvas → captureStream → recorder
+  //                                  ↘
+  //                                   preview <video> in DOM (user-visible)
+  // Flip swaps the camera track behind srcVideoEl; the canvas keeps drawing,
+  // so the recorder sees an uninterrupted single stream.
   const streamRef = useRef<MediaStream | null>(null);
+  const videoTrackRef = useRef<MediaStreamTrack | null>(null);
+  const audioTrackRef = useRef<MediaStreamTrack | null>(null);
+  const srcVideoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const rafRef = useRef<number | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
   const liveVideoRef = useRef<HTMLVideoElement | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startedAtRef = useRef<number | null>(null);
 
-  // Callback ref: the <video> preview element only mounts once status flips to
-  // 'recording', so we attach the stream the moment React gives us the node.
-  // Using a plain ref + assigning srcObject inside handleStart races the render
-  // and leaves the preview black while the actual recording works fine.
+  // Callback ref: the visible <video> preview element only mounts once status
+  // flips to 'recording'. Attach the stream the moment React gives us the node.
   const setLiveVideoEl = useCallback((el: HTMLVideoElement | null) => {
     liveVideoRef.current = el;
     if (el && streamRef.current && el.srcObject !== streamRef.current) {
       el.srcObject = streamRef.current;
-      // autoPlay + muted + playsInline normally handles this, but iOS Safari
-      // occasionally needs an explicit nudge.
       el.play().catch(() => {});
     }
   }, []);
+
   const mediaSupported = useMemo(
     () =>
       typeof navigator !== 'undefined' &&
@@ -72,12 +130,30 @@ export default function VideoRecorder({ onChange, disabled = false }: Props) {
     [],
   );
 
-  const stopStream = useCallback(() => {
-    if (streamRef.current) {
-      for (const t of streamRef.current.getTracks()) t.stop();
-      streamRef.current = null;
+  const stopRaf = useCallback(() => {
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
     }
   }, []);
+
+  const cleanupPipeline = useCallback(() => {
+    stopRaf();
+    if (videoTrackRef.current) {
+      videoTrackRef.current.stop();
+      videoTrackRef.current = null;
+    }
+    if (audioTrackRef.current) {
+      audioTrackRef.current.stop();
+      audioTrackRef.current = null;
+    }
+    if (srcVideoRef.current) {
+      srcVideoRef.current.srcObject = null;
+      srcVideoRef.current = null;
+    }
+    streamRef.current = null;
+    canvasRef.current = null;
+  }, [stopRaf]);
 
   const clearTick = useCallback(() => {
     if (tickRef.current !== null) {
@@ -95,7 +171,7 @@ export default function VideoRecorder({ onChange, disabled = false }: Props) {
   useEffect(() => {
     return () => {
       clearTick();
-      stopStream();
+      cleanupPipeline();
       revokeRecorded();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -110,21 +186,56 @@ export default function VideoRecorder({ onChange, disabled = false }: Props) {
     setStatus('requesting');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' } },
+        video: { facingMode: { ideal: facing } },
         audio: audioEnabled,
       });
       streamRef.current = stream;
-      // If the <video> element is already mounted (e.g. re-record), attach
-      // immediately; otherwise setLiveVideoEl will attach on mount.
-      if (liveVideoRef.current && liveVideoRef.current.srcObject !== stream) {
-        liveVideoRef.current.srcObject = stream;
-        liveVideoRef.current.play().catch(() => {});
+      videoTrackRef.current = stream.getVideoTracks()[0] ?? null;
+      audioTrackRef.current = stream.getAudioTracks()[0] ?? null;
+
+      // Offscreen source video — drives the canvas via drawImage. Kept off the
+      // DOM so we don't depend on React render timing for the recorder setup.
+      const srcVideo = document.createElement('video');
+      srcVideo.muted = true;
+      srcVideo.playsInline = true;
+      srcVideo.autoplay = true;
+      srcVideo.srcObject = stream;
+      srcVideoRef.current = srcVideo;
+      await srcVideo.play().catch(() => {});
+      await waitForVideoMetadata(srcVideo);
+
+      const canvasW = srcVideo.videoWidth || 720;
+      const canvasH = srcVideo.videoHeight || 1280;
+      const canvas = document.createElement('canvas');
+      canvas.width = canvasW;
+      canvas.height = canvasH;
+      canvasRef.current = canvas;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        throw new Error('Canvas 2D context not available.');
       }
+
+      const draw = () => {
+        if (canvasRef.current && srcVideoRef.current) {
+          drawVideoFit(ctx, srcVideoRef.current, canvasW, canvasH);
+        }
+        rafRef.current = requestAnimationFrame(draw);
+      };
+      rafRef.current = requestAnimationFrame(draw);
+
+      const captureStream =
+        typeof canvas.captureStream === 'function' ? canvas.captureStream(CANVAS_FPS) : null;
+      if (!captureStream) {
+        throw new Error('This browser cannot capture the canvas for recording.');
+      }
+      const recordingStream = new MediaStream();
+      for (const t of captureStream.getVideoTracks()) recordingStream.addTrack(t);
+      if (audioTrackRef.current) recordingStream.addTrack(audioTrackRef.current);
 
       const mimeType = pickMimeType();
       const recorder = mimeType
-        ? new MediaRecorder(stream, { mimeType })
-        : new MediaRecorder(stream);
+        ? new MediaRecorder(recordingStream, { mimeType })
+        : new MediaRecorder(recordingStream);
       recorderRef.current = recorder;
       chunksRef.current = [];
 
@@ -146,7 +257,7 @@ export default function VideoRecorder({ onChange, disabled = false }: Props) {
             ? Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000))
             : elapsed;
         startedAtRef.current = null;
-        stopStream();
+        cleanupPipeline();
         clearTick();
         setStatus('reviewing');
         onChange({ blob, durationSeconds: duration });
@@ -161,7 +272,6 @@ export default function VideoRecorder({ onChange, disabled = false }: Props) {
         setElapsed((prev) => {
           const next = prev + 1;
           if (next >= MAX_DURATION_SECONDS) {
-            // Auto-stop at cap.
             if (recorderRef.current && recorderRef.current.state === 'recording') {
               recorderRef.current.stop();
             }
@@ -171,7 +281,7 @@ export default function VideoRecorder({ onChange, disabled = false }: Props) {
       }, 1000);
     } catch (err) {
       setStatus('idle');
-      stopStream();
+      cleanupPipeline();
       if (err instanceof DOMException && err.name === 'NotAllowedError') {
         setError('Camera permission was denied.');
       } else if (err instanceof DOMException && err.name === 'NotFoundError') {
@@ -182,13 +292,68 @@ export default function VideoRecorder({ onChange, disabled = false }: Props) {
         setError('Could not start the camera.');
       }
     }
-  }, [audioEnabled, clearTick, elapsed, mediaSupported, onChange, stopStream]);
+  }, [audioEnabled, cleanupPipeline, clearTick, elapsed, facing, mediaSupported, onChange]);
 
   const handleStop = useCallback(() => {
     if (recorderRef.current && recorderRef.current.state === 'recording') {
       recorderRef.current.stop();
     }
   }, []);
+
+  const handleFlip = useCallback(async () => {
+    if (flipping) return;
+    if (status !== 'recording') return;
+    if (!streamRef.current || !srcVideoRef.current) return;
+    setFlipping(true);
+    const nextFacing: Facing = facing === 'user' ? 'environment' : 'user';
+    try {
+      // Request video only — keep the existing audio track running so the
+      // recording's audio is uninterrupted.
+      const nextStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: nextFacing } },
+        audio: false,
+      });
+      const nextVideoTrack = nextStream.getVideoTracks()[0];
+      if (!nextVideoTrack) {
+        throw new Error('Could not get a video track from the other camera.');
+      }
+
+      // Stop the previous camera track; build a new preview stream from the
+      // new video track + persistent audio track.
+      if (videoTrackRef.current) {
+        videoTrackRef.current.stop();
+      }
+      videoTrackRef.current = nextVideoTrack;
+
+      const newPreviewStream = new MediaStream();
+      newPreviewStream.addTrack(nextVideoTrack);
+      if (audioTrackRef.current) newPreviewStream.addTrack(audioTrackRef.current);
+      streamRef.current = newPreviewStream;
+
+      // Update the offscreen source video; the RAF loop keeps drawing into the
+      // canvas, so the MediaRecorder never sees a discontinuity.
+      srcVideoRef.current.srcObject = newPreviewStream;
+      await srcVideoRef.current.play().catch(() => {});
+
+      // Update the visible preview.
+      if (liveVideoRef.current) {
+        liveVideoRef.current.srcObject = newPreviewStream;
+        liveVideoRef.current.play().catch(() => {});
+      }
+
+      setFacing(nextFacing);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'NotFoundError') {
+        setError('The other camera is not available on this device.');
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Could not flip the camera.');
+      }
+    } finally {
+      setFlipping(false);
+    }
+  }, [facing, flipping, status]);
 
   const handleDiscard = useCallback(() => {
     if (recordedUrl) URL.revokeObjectURL(recordedUrl);
@@ -223,6 +388,40 @@ export default function VideoRecorder({ onChange, disabled = false }: Props) {
           >
             🎥 Record video
           </button>
+          <div
+            role="radiogroup"
+            aria-label="Camera"
+            className="inline-flex overflow-hidden rounded-full border border-violet-300 text-sm"
+          >
+            <button
+              type="button"
+              role="radio"
+              aria-checked={facing === 'user'}
+              onClick={() => setFacing('user')}
+              disabled={disabled}
+              className={`px-3 py-1.5 ${
+                facing === 'user'
+                  ? 'bg-violet-600 text-white'
+                  : 'bg-white text-violet-800 hover:bg-violet-50'
+              } disabled:opacity-50`}
+            >
+              Front
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={facing === 'environment'}
+              onClick={() => setFacing('environment')}
+              disabled={disabled}
+              className={`px-3 py-1.5 ${
+                facing === 'environment'
+                  ? 'bg-violet-600 text-white'
+                  : 'bg-white text-violet-800 hover:bg-violet-50'
+              } disabled:opacity-50`}
+            >
+              Back
+            </button>
+          </div>
           <label className="flex items-center gap-2 text-sm text-violet-900/80">
             <input
               type="checkbox"
@@ -257,6 +456,16 @@ export default function VideoRecorder({ onChange, disabled = false }: Props) {
               />
               <span className="font-mono">{formatMmSs(elapsed)}</span>
             </div>
+            <button
+              type="button"
+              onClick={() => void handleFlip()}
+              disabled={flipping}
+              aria-label="Flip camera"
+              className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-3 py-1 text-xs font-medium text-white hover:bg-black/80 disabled:opacity-50"
+            >
+              <span aria-hidden>🔄</span>
+              {flipping ? 'Flipping…' : 'Flip'}
+            </button>
           </div>
           <button
             type="button"
