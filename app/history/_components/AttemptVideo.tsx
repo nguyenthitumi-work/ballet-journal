@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import { getVideoSignedUrl } from '@/lib/storage/videos';
 import { deleteVideoForAttempt } from '../actions';
+import PoseOverlay from './PoseOverlay';
 
 interface Props {
   attemptId: string;
@@ -14,7 +15,9 @@ export default function AttemptVideo({ attemptId, videoPath }: Props) {
   const [loaded, setLoaded] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSkeleton, setShowSkeleton] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,14 +63,29 @@ export default function AttemptVideo({ attemptId, videoPath }: Props) {
 
   return (
     <div className="mt-3 flex flex-col gap-2">
-      <video
-        src={url}
-        controls
-        playsInline
-        preload="metadata"
-        className="aspect-video w-full overflow-hidden rounded-lg bg-black"
-      />
-      <div className="flex items-center justify-end gap-2">
+      <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black">
+        <video
+          ref={videoRef}
+          src={url}
+          controls
+          playsInline
+          preload="metadata"
+          crossOrigin="anonymous"
+          className="h-full w-full"
+        />
+        {showSkeleton ? <PoseOverlay videoRef={videoRef} /> : null}
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <label className="flex items-center gap-2 text-xs text-violet-900/80">
+          <input
+            type="checkbox"
+            checked={showSkeleton}
+            onChange={(e) => setShowSkeleton(e.target.checked)}
+            className="h-3.5 w-3.5 accent-violet-600"
+          />
+          Show skeleton
+        </label>
+        <div className="flex items-center gap-2">
         {confirming ? (
           <>
             <span className="text-xs text-violet-900/70">Delete this video?</span>
@@ -98,6 +116,7 @@ export default function AttemptVideo({ attemptId, videoPath }: Props) {
             🗑 Delete video
           </button>
         )}
+        </div>
       </div>
       {error ? <p className="text-xs text-red-700">{error}</p> : null}
     </div>

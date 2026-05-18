@@ -15,10 +15,18 @@ Built for one specific 10-year-old first, then generalizable later.
 - Streak counter (soft, no shaming), history view, settings
 - 4 built-in practice plans: Quick Barre, Stretch & Strengthen, Center Practice, Jumps & Turns
 - Daily "Today's practice" suggestion that weights focus skills and stale skills
+- Optional pose skeleton overlay on History playback. Toggle "Show skeleton" on
+  any recorded clip and MediaPipe Pose Landmarker (Apache 2.0, runs locally in the
+  browser, Lite model) draws 33-point body landmarks on top of the video. No
+  corrections, no scoring — just a "see your own lines" tool. Model downloads
+  lazily the first time the toggle is enabled.
 
 ## What's stubbed (intentionally)
 
-- **Pose detection.** Lands later via MediaPipe (Apache 2.0, client-side) once the journaling habit is set.
+- **Pose corrections / classification.** Phase 1 ships landmarks only. Naming
+  poses (plié vs. tendu) and per-joint corrections ("lift elbow higher") are
+  deferred — they need labeled reference data tuned to a young dancer's
+  proportions, not just more code.
 
 ## Stack
 
@@ -193,8 +201,8 @@ even if the app code is wrong — defense in depth at the database level.
 
 ## Roadmap (post-v1)
 
-- Side-by-side video compare
+- Side-by-side video compare (her clip alongside the skill's YouTube reference, both with skeleton overlay)
 - Calendar grid view in History
 - Smarter daily suggestion (per-day-of-week templates)
-- Pose detection via MediaPipe — client-side, Apache 2.0, no AI license
+- Phase-2 pose: one objective metric per skill (e.g. turnout angle, plié depth) shown as a number, not a critique
 - iPad support if she wants it (would add Supabase Auth + RLS at that point)
