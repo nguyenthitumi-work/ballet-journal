@@ -1,19 +1,61 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSessionContext } from '@/lib/session';
-import { listSessions, listAttemptsForSession } from '@/lib/db/sessions';
+import {
+  listSessions,
+  listAttemptsForSession,
+  listSessionDaysInMonth,
+} from '@/lib/db/sessions';
 import { listSkills } from '@/lib/db/skills';
 import type { Skill, SkillAttempt } from '@/lib/types';
 import { StreakBanner } from './_components/StreakBanner';
 import { SessionCard } from './_components/SessionCard';
+import { MonthCalendar, type DayBucket } from './_components/MonthCalendar';
 
 interface HistoryPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
+const TZ = 'America/Los_Angeles';
+
 function firstParam(value: string | string[] | undefined): string | undefined {
   if (Array.isArray(value)) return value[0];
   return value;
+}
+
+function ymdInTz(d: Date, timeZone: string): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(d);
+  const y = parts.find((p) => p.type === 'year')?.value ?? '';
+  const m = parts.find((p) => p.type === 'month')?.value ?? '';
+  const day = parts.find((p) => p.type === 'day')?.value ?? '';
+  return `${y}-${m}-${day}`;
+}
+
+function buildHref(params: {
+  month?: string | null;
+  date?: string | null;
+  milestones?: boolean;
+}): string {
+  const sp = new URLSearchParams();
+  if (params.month) sp.set('month', params.month);
+  if (params.date) sp.set('date', params.date);
+  if (params.milestones) sp.set('milestones', '1');
+  const s = sp.toString();
+  return s ? `/history?${s}` : '/history';
+}
+
+function shiftMonth(year: number, monthIdx: number, delta: number): { year: number; monthIdx: number } {
+  const total = year * 12 + monthIdx + delta;
+  return { year: Math.floor(total / 12), monthIdx: ((total % 12) + 12) % 12 };
+}
+
+function monthKey(year: number, monthIdx: number): string {
+  return `${year}-${String(monthIdx + 1).padStart(2, '0')}`;
 }
 
 export default async function HistoryPage(props: HistoryPageProps) {
@@ -25,10 +67,38 @@ export default async function HistoryPage(props: HistoryPageProps) {
 
   const sp = await props.searchParams;
   const milestonesOnly = firstParam(sp.milestones) === '1';
+  const dateParam = firstParam(sp.date);
+  const monthParam = firstParam(sp.month);
 
-  const [sessions, skills] = await Promise.all([
+  const now = new Date();
+  const todayYmd = ymdInTz(now, TZ);
+  const todayParts = todayYmd.split('-').map(Number);
+  const currentYear = todayParts[0];
+  const currentMonthIdx = todayParts[1] - 1;
+
+  let calendarYear = currentYear;
+  let calendarMonthIdx = currentMonthIdx;
+  if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
+    const [yy, mm] = monthParam.split('-').map(Number);
+    if (mm >= 1 && mm <= 12) {
+      calendarYear = yy;
+      calendarMonthIdx = mm - 1;
+    }
+  } else if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+    const [yy, mm] = dateParam.split('-').map(Number);
+    if (mm >= 1 && mm <= 12) {
+      calendarYear = yy;
+      calendarMonthIdx = mm - 1;
+    }
+  }
+
+  const selectedYmd =
+    dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : null;
+
+  const [sessions, skills, monthDays] = await Promise.all([
     listSessions(userId),
     listSkills(userId),
+    listSessionDaysInMonth(userId, calendarYear, calendarMonthIdx),
   ]);
 
   // PERF: per-session attempt fetch in parallel (N round-trips). Acceptable for v1
@@ -47,17 +117,62 @@ export default async function HistoryPage(props: HistoryPageProps) {
 
   const skillsById: Map<string, Skill> = new Map(skills.map((s) => [s.id, s]));
 
+  const byYmd: Map<string, DayBucket> = new Map();
+  for (const row of monthDays) {
+    const ymd = ymdInTz(new Date(row.startedAt), TZ);
+    const existing = byYmd.get(ymd) ?? { totalSec: 0, count: 0 };
+    existing.count += 1;
+    existing.totalSec += row.durationSeconds ?? 0;
+    byYmd.set(ymd, existing);
+  }
+
   // When milestonesOnly is on: keep only sessions that have at least one milestone
   // attempt, and within those sessions show only the milestone attempts.
-  const visibleSessions = milestonesOnly
+  let visibleSessions = milestonesOnly
     ? sessions.filter((s) =>
         (attemptsBySession.get(s.id) ?? []).some((a) => a.isMilestone),
       )
     : sessions;
+  if (selectedYmd) {
+    visibleSessions = visibleSessions.filter(
+      (s) => ymdInTz(new Date(s.startedAt), TZ) === selectedYmd,
+    );
+  }
   const visibleAttemptsFor = (sessionId: string): SkillAttempt[] => {
     const all = attemptsBySession.get(sessionId) ?? [];
     return milestonesOnly ? all.filter((a) => a.isMilestone) : all;
   };
+
+  const prev = shiftMonth(calendarYear, calendarMonthIdx, -1);
+  const next = shiftMonth(calendarYear, calendarMonthIdx, 1);
+  const isCurrentMonth =
+    calendarYear === currentYear && calendarMonthIdx === currentMonthIdx;
+
+  const prevHref = buildHref({
+    month: monthKey(prev.year, prev.monthIdx),
+    milestones: milestonesOnly,
+  });
+  const nextHref = buildHref({
+    month: monthKey(next.year, next.monthIdx),
+    milestones: milestonesOnly,
+  });
+  const todayHref = isCurrentMonth
+    ? null
+    : buildHref({ milestones: milestonesOnly });
+  const hrefForDay = (ymd: string) =>
+    buildHref({
+      month: monthKey(calendarYear, calendarMonthIdx),
+      date: ymd === selectedYmd ? null : ymd,
+      milestones: milestonesOnly,
+    });
+
+  const selectedChipLabel = selectedYmd
+    ? new Intl.DateTimeFormat('en-US', {
+        timeZone: TZ,
+        month: 'short',
+        day: 'numeric',
+      }).format(new Date(`${selectedYmd}T12:00:00Z`))
+    : null;
 
   return (
     <section className="flex flex-col gap-6">
@@ -68,13 +183,48 @@ export default async function HistoryPage(props: HistoryPageProps) {
 
       <StreakBanner profile={profile} />
 
+      <MonthCalendar
+        year={calendarYear}
+        monthIdx={calendarMonthIdx}
+        todayYmd={todayYmd}
+        selectedYmd={selectedYmd}
+        byYmd={byYmd}
+        prevHref={prevHref}
+        nextHref={nextHref}
+        todayHref={todayHref}
+        hrefForDay={hrefForDay}
+      />
+
       <nav aria-label="Filter history" className="flex flex-wrap gap-2">
-        <FilterChip href="/history" label="All" active={!milestonesOnly} />
         <FilterChip
-          href="/history?milestones=1"
+          href={buildHref({
+            month: isCurrentMonth ? null : monthKey(calendarYear, calendarMonthIdx),
+          })}
+          label="All"
+          active={!milestonesOnly && !selectedYmd}
+        />
+        <FilterChip
+          href={buildHref({
+            month: isCurrentMonth ? null : monthKey(calendarYear, calendarMonthIdx),
+            date: selectedYmd,
+            milestones: true,
+          })}
           label="⭐ Milestones"
           active={milestonesOnly}
         />
+        {selectedChipLabel && (
+          <Link
+            href={buildHref({
+              month: isCurrentMonth ? null : monthKey(calendarYear, calendarMonthIdx),
+              milestones: milestonesOnly,
+            })}
+            className="inline-flex items-center gap-1.5 rounded-full bg-violet-600 px-3 py-1 text-xs font-medium text-white shadow-sm"
+          >
+            <span aria-hidden>📅</span>
+            {selectedChipLabel}
+            <span aria-hidden className="text-white/80">✕</span>
+          </Link>
+        )}
       </nav>
 
       {sessions.length === 0 ? (
@@ -92,7 +242,9 @@ export default async function HistoryPage(props: HistoryPageProps) {
         </div>
       ) : visibleSessions.length === 0 ? (
         <p className="rounded-2xl border border-violet-200 bg-white p-5 text-sm text-violet-900/70 shadow-sm">
-          No milestones yet. Tap the ⭐ box during practice to mark one.
+          {selectedYmd
+            ? 'No practice on this day.'
+            : 'No milestones yet. Tap the ⭐ box during practice to mark one.'}
         </p>
       ) : (
         <div className="flex flex-col gap-3">

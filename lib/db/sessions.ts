@@ -82,6 +82,30 @@ export async function listSessions(
   return (data as PracticeSessionRow[]).map(sessionFromRow);
 }
 
+export async function listSessionDaysInMonth(
+  userId: string,
+  year: number,
+  monthIdx: number,
+): Promise<Array<{ startedAt: string; durationSeconds: number | null }>> {
+  // Pad by one day each side so a session that occurred on the 1st (LA) but
+  // is stored as the previous UTC day (or vice versa on the last) is still
+  // covered. Caller buckets each row by its LA ymd.
+  const startIso = new Date(Date.UTC(year, monthIdx, 0)).toISOString();
+  const endIso = new Date(Date.UTC(year, monthIdx + 1, 2)).toISOString();
+  const supabase = await getServerSupabase();
+  const { data, error } = await supabase
+    .from('practice_session')
+    .select('started_at, duration_seconds')
+    .eq('user_id', userId)
+    .not('ended_at', 'is', null)
+    .gte('started_at', startIso)
+    .lt('started_at', endIso);
+  if (error) throw new Error(error.message);
+  return (data as Array<{ started_at: string; duration_seconds: number | null }>).map(
+    (r) => ({ startedAt: r.started_at, durationSeconds: r.duration_seconds }),
+  );
+}
+
 export async function recordAttempt(args: {
   userId: string;
   sessionId: string;
