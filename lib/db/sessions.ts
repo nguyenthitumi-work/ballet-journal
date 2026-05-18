@@ -109,6 +109,23 @@ export async function recordAttempt(args: {
   return attemptFromRow(data as SkillAttemptRow);
 }
 
+export async function listAttemptsForSkill(
+  userId: string,
+  skillId: string,
+  limit = 50,
+): Promise<SkillAttempt[]> {
+  const supabase = await getServerSupabase();
+  const { data, error } = await supabase
+    .from('skill_attempt')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('skill_id', skillId)
+    .order('attempted_at', { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(error.message);
+  return (data as SkillAttemptRow[]).map(attemptFromRow);
+}
+
 export async function listAttemptsForSession(sessionId: string): Promise<SkillAttempt[]> {
   const supabase = await getServerSupabase();
   const { data, error } = await supabase
@@ -164,6 +181,52 @@ export async function getAttemptVideoPath(args: {
     .maybeSingle();
   if (error) throw new Error(error.message);
   return (data as { video_path: string | null } | null)?.video_path ?? null;
+}
+
+export async function setAttemptPhotoPath(args: {
+  userId: string;
+  attemptId: string;
+  photoPath: string;
+  photoSizeBytes: number;
+}): Promise<void> {
+  const supabase = await getServerSupabase();
+  const { error } = await supabase
+    .from('skill_attempt')
+    .update({
+      photo_path: args.photoPath,
+      photo_size_bytes: args.photoSizeBytes,
+    })
+    .eq('user_id', args.userId)
+    .eq('id', args.attemptId);
+  if (error) throw new Error(error.message);
+}
+
+export async function clearAttemptPhotoPath(args: {
+  userId: string;
+  attemptId: string;
+}): Promise<void> {
+  const supabase = await getServerSupabase();
+  const { error } = await supabase
+    .from('skill_attempt')
+    .update({ photo_path: null, photo_size_bytes: null })
+    .eq('user_id', args.userId)
+    .eq('id', args.attemptId);
+  if (error) throw new Error(error.message);
+}
+
+export async function getAttemptPhotoPath(args: {
+  userId: string;
+  attemptId: string;
+}): Promise<string | null> {
+  const supabase = await getServerSupabase();
+  const { data, error } = await supabase
+    .from('skill_attempt')
+    .select('photo_path')
+    .eq('user_id', args.userId)
+    .eq('id', args.attemptId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data as { photo_path: string | null } | null)?.photo_path ?? null;
 }
 
 export async function getUserVideoStats(userId: string): Promise<{

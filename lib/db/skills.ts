@@ -3,6 +3,7 @@ import { getServerSupabase } from '@/lib/supabase/server';
 import { skillFromRow, categoryFromRow } from '@/lib/types';
 import type {
   CategoryId,
+  ProgressStatus,
   Skill,
   SkillCategory,
   SkillCategoryRow,
@@ -67,6 +68,20 @@ export async function setFocus(
   const { error } = await supabase
     .from('skill')
     .update({ is_currently_working_on: focus })
+    .eq('user_id', userId)
+    .eq('id', skillId);
+  if (error) throw new Error(error.message);
+}
+
+export async function setProgressStatus(
+  userId: string,
+  skillId: string,
+  status: ProgressStatus,
+): Promise<void> {
+  const supabase = await getServerSupabase();
+  const { error } = await supabase
+    .from('skill')
+    .update({ progress_status: status })
     .eq('user_id', userId)
     .eq('id', skillId);
   if (error) throw new Error(error.message);

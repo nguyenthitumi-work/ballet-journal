@@ -3,11 +3,21 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 
 import {
+  buildPhotoPath,
+  deletePhotoBlob,
+  uploadPhotoBlob,
+} from '@/lib/storage/photos';
+import {
   buildVideoPath,
   deleteVideoBlob,
   uploadVideoBlob,
 } from '@/lib/storage/videos';
-import { attachVideoToAttempt, submitAttempt } from '../actions';
+import {
+  attachPhotoToAttempt,
+  attachVideoToAttempt,
+  submitAttempt,
+} from '../actions';
+import PhotoCapture, { type CapturedPhoto } from './PhotoCapture';
 import VideoRecorder, { type RecordedClip } from './VideoRecorder';
 
 type CurrentSkill = {
@@ -63,6 +73,8 @@ export default function PracticeLoop({
   const [tipsOpen, setTipsOpen] = useState(false);
   const [recordedClip, setRecordedClip] = useState<RecordedClip | null>(null);
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>('idle');
+  const [capturedPhoto, setCapturedPhoto] = useState<CapturedPhoto | null>(null);
+  const [photoUploadStatus, setPhotoUploadStatus] = useState<UploadStatus>('idle');
   const [seconds, setSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -71,6 +83,8 @@ export default function PracticeLoop({
   // would otherwise capture stale state.
   const uploadPathRef = useRef<string | null>(null);
   const uploadPromiseRef = useRef<Promise<void> | null>(null);
+  const photoUploadPathRef = useRef<string | null>(null);
+  const photoUploadPromiseRef = useRef<Promise<void> | null>(null);
   const savedSuccessfullyRef = useRef(false);
 
   useEffect(() => {
@@ -80,16 +94,24 @@ export default function PracticeLoop({
     return () => clearInterval(interval);
   }, []);
 
-  // On unmount: if we uploaded a video but never attached it (user navigated
+  // On unmount: if we uploaded media but never attached it (user navigated
   // away mid-flow), clean it up. Skipped after a successful Save & next.
   useEffect(() => {
     return () => {
-      const path = uploadPathRef.current;
-      const promise = uploadPromiseRef.current;
-      if (path && !savedSuccessfullyRef.current) {
-        Promise.resolve(promise)
+      const vPath = uploadPathRef.current;
+      const vPromise = uploadPromiseRef.current;
+      if (vPath && !savedSuccessfullyRef.current) {
+        Promise.resolve(vPromise)
           .catch(() => undefined)
-          .then(() => deleteVideoBlob(path))
+          .then(() => deleteVideoBlob(vPath))
+          .catch(() => undefined);
+      }
+      const pPath = photoUploadPathRef.current;
+      const pPromise = photoUploadPromiseRef.current;
+      if (pPath && !savedSuccessfullyRef.current) {
+        Promise.resolve(pPromise)
+          .catch(() => undefined)
+          .then(() => deletePhotoBlob(pPath))
           .catch(() => undefined);
       }
     };
@@ -134,6 +156,52 @@ export default function PracticeLoop({
               `Video upload failed: ${
                 err instanceof Error ? err.message : 'unknown error'
               }. You can re-record or save without it.`,
+            );
+          }
+          throw err;
+        },
+      );
+    },
+    [userId],
+  );
+
+  const handlePhotoChange = useCallback(
+    (newPhoto: CapturedPhoto | null) => {
+      const prevPath = photoUploadPathRef.current;
+      const prevPromise = photoUploadPromiseRef.current;
+      photoUploadPathRef.current = null;
+      photoUploadPromiseRef.current = null;
+      if (prevPath) {
+        Promise.resolve(prevPromise)
+          .catch(() => undefined)
+          .then(() => deletePhotoBlob(prevPath))
+          .catch(() => undefined);
+      }
+
+      if (newPhoto === null) {
+        setCapturedPhoto(null);
+        setPhotoUploadStatus('idle');
+        return;
+      }
+
+      setCapturedPhoto(newPhoto);
+      setPhotoUploadStatus('uploading');
+      setError(null);
+
+      const path = buildPhotoPath(userId, newPhoto.blob.type);
+      photoUploadPathRef.current = path;
+
+      photoUploadPromiseRef.current = uploadPhotoBlob(path, newPhoto.blob).then(
+        () => {
+          if (photoUploadPathRef.current === path) setPhotoUploadStatus('uploaded');
+        },
+        (err: unknown) => {
+          if (photoUploadPathRef.current === path) {
+            setPhotoUploadStatus('failed');
+            setError(
+              `Photo upload failed: ${
+                err instanceof Error ? err.message : 'unknown error'
+              }. You can retake or save without it.`,
             );
           }
           throw err;
@@ -189,6 +257,27 @@ export default function PracticeLoop({
           }
         }
 
+        if (capturedPhoto) {
+          const photoPromise = photoUploadPromiseRef.current;
+          const photoPath = photoUploadPathRef.current;
+          if (photoPromise && photoPath) {
+            try {
+              await photoPromise;
+              await attachPhotoToAttempt({
+                attemptId,
+                photoPath,
+                photoSizeBytes: capturedPhoto.sizeBytes,
+              });
+            } catch (uploadErr) {
+              const msg =
+                uploadErr instanceof Error ? uploadErr.message : 'unknown error';
+              setError(
+                `Practice was saved, but the photo upload did not finish (${msg}).`,
+              );
+            }
+          }
+        }
+
         savedSuccessfullyRef.current = true;
       } catch (err) {
         if (err instanceof Error) {
@@ -207,6 +296,7 @@ export default function PracticeLoop({
   const saveLabel = (() => {
     if (!isPending) return 'Save & next';
     if (recordedClip && uploadStatus === 'uploading') return 'Uploading video…';
+    if (capturedPhoto && photoUploadStatus === 'uploading') return 'Uploading photo…';
     return 'Saving…';
   })();
 
@@ -323,6 +413,23 @@ export default function PracticeLoop({
         {recordedClip && uploadStatus === 'failed' ? (
           <p className="text-xs text-red-700">
             Video upload failed. You can re-record above, or tap Save & next to
+            save without it.
+          </p>
+        ) : null}
+
+        <PhotoCapture onChange={handlePhotoChange} disabled={isPending} />
+
+        {capturedPhoto && photoUploadStatus === 'uploading' ? (
+          <p className="text-xs text-violet-900/60">
+            Uploading photo to your account…
+          </p>
+        ) : null}
+        {capturedPhoto && photoUploadStatus === 'uploaded' ? (
+          <p className="text-xs text-emerald-700">Photo ready.</p>
+        ) : null}
+        {capturedPhoto && photoUploadStatus === 'failed' ? (
+          <p className="text-xs text-red-700">
+            Photo upload failed. You can retake above, or tap Save & next to
             save without it.
           </p>
         ) : null}

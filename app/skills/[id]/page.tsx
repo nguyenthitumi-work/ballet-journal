@@ -1,12 +1,15 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSessionContext } from '@/lib/session';
+import { listAttemptsForSkill } from '@/lib/db/sessions';
 import { getSkill, listCategories, setReferenceUrlSuggestion } from '@/lib/db/skills';
 import { CATEGORY_LABELS } from '@/lib/types';
 import { fetchFirstYouTubeVideoUrl } from '@/lib/youtube';
+import { AttemptsTimeline } from '../_components/AttemptsTimeline';
 import { DifficultyBadge } from '../_components/Difficulty';
 import { FocusToggle } from '../_components/FocusToggle';
 import { humanizeLastAttempted } from '../_components/lastAttempted';
+import { ProgressStatusToggle } from '../_components/ProgressStatusToggle';
 import { PronounceButton } from '../_components/PronounceButton';
 import { ReferenceVideo } from '../_components/ReferenceVideo';
 
@@ -30,9 +33,10 @@ export default async function SkillDetailPage(props: SkillDetailPageProps) {
   if (!onboarded) redirect('/onboarding');
 
   const { id } = await props.params;
-  const [skill, categories] = await Promise.all([
+  const [skill, categories, attempts] = await Promise.all([
     getSkill(userId, id),
     listCategories(),
+    listAttemptsForSkill(userId, id),
   ]);
 
   if (!skill) {
@@ -118,7 +122,10 @@ export default async function SkillDetailPage(props: SkillDetailPageProps) {
         </div>
       </header>
 
-      <FocusToggle skillId={skill.id} initial={skill.isCurrentlyWorkingOn} />
+      <div className="flex flex-col gap-4">
+        <FocusToggle skillId={skill.id} initial={skill.isCurrentlyWorkingOn} />
+        <ProgressStatusToggle skillId={skill.id} initial={skill.progressStatus} />
+      </div>
 
       <ReferenceVideo
         skillId={skill.id}
@@ -165,6 +172,8 @@ export default async function SkillDetailPage(props: SkillDetailPageProps) {
         <h2 className="text-sm font-medium text-violet-900/70">Last tried</h2>
         <p className="mt-1 text-violet-950">{humanizeLastAttempted(skill.lastAttemptedAt)}</p>
       </div>
+
+      <AttemptsTimeline attempts={attempts} />
     </section>
   );
 }

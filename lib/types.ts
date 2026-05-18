@@ -27,6 +27,7 @@ export const CATEGORY_BY_LABEL: Record<string, CategoryId> = {
 export type Level = 'Beginner' | 'Intermediate' | 'Advanced';
 export type Rating = 1 | 2 | 3 | 4 | 5;
 export type Difficulty = 1 | 2 | 3 | 4 | 5;
+export type ProgressStatus = 'learning' | 'practicing' | 'mastered';
 
 export interface SkillCategory {
   id: CategoryId;
@@ -58,6 +59,7 @@ export interface Skill {
   difficulty: Difficulty;
   defaultDurationSeconds: number;
   isCurrentlyWorkingOn: boolean;
+  progressStatus: ProgressStatus;
   dateAdded: string;
   lastAttemptedAt: string | null;
   referenceUrl: string | null;
@@ -98,6 +100,8 @@ export interface SkillAttempt {
   durationSeconds: number;
   videoPath: string | null;
   videoSizeBytes: number | null;
+  photoPath: string | null;
+  photoSizeBytes: number | null;
 }
 
 export interface SkillRow {
@@ -111,6 +115,7 @@ export interface SkillRow {
   difficulty: number;
   default_duration_seconds: number;
   is_currently_working_on: boolean;
+  progress_status: ProgressStatus;
   date_added: string;
   last_attempted_at: string | null;
   reference_url: string | null;
@@ -170,6 +175,8 @@ export interface SkillAttemptRow {
   duration_seconds: number;
   video_path: string | null;
   video_size_bytes: number | null;
+  photo_path: string | null;
+  photo_size_bytes: number | null;
 }
 
 export const skillFromRow = (r: SkillRow): Skill => ({
@@ -183,6 +190,7 @@ export const skillFromRow = (r: SkillRow): Skill => ({
   difficulty: r.difficulty as Difficulty,
   defaultDurationSeconds: r.default_duration_seconds,
   isCurrentlyWorkingOn: r.is_currently_working_on,
+  progressStatus: r.progress_status,
   dateAdded: r.date_added,
   lastAttemptedAt: r.last_attempted_at,
   referenceUrl: r.reference_url,
@@ -242,4 +250,6 @@ export const attemptFromRow = (r: SkillAttemptRow): SkillAttempt => ({
   durationSeconds: r.duration_seconds,
   videoPath: r.video_path,
   videoSizeBytes: r.video_size_bytes,
+  photoPath: r.photo_path,
+  photoSizeBytes: r.photo_size_bytes,
 });

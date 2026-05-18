@@ -6,6 +6,7 @@ import { getSessionContext } from '@/lib/session';
 import {
   endSession,
   recordAttempt,
+  setAttemptPhotoPath,
   setAttemptVideoPath,
   startSession,
 } from '@/lib/db/sessions';
@@ -132,6 +133,38 @@ export async function attachVideoToAttempt(args: {
     attemptId,
     videoPath,
     videoSizeBytes: Math.floor(videoSizeBytes),
+  });
+}
+
+export async function attachPhotoToAttempt(args: {
+  attemptId: string;
+  photoPath: string;
+  photoSizeBytes: number;
+}): Promise<void> {
+  const { attemptId, photoPath, photoSizeBytes } = args;
+
+  if (typeof attemptId !== 'string' || attemptId.length === 0) {
+    throw new Error('Missing attempt id.');
+  }
+  if (typeof photoPath !== 'string' || photoPath.length === 0) {
+    throw new Error('Missing photo path.');
+  }
+  if (!Number.isFinite(photoSizeBytes) || photoSizeBytes < 0) {
+    throw new Error('Invalid photo size.');
+  }
+
+  const { userId } = await getSessionContext();
+
+  const firstSegment = photoPath.split('/')[0];
+  if (firstSegment !== userId) {
+    throw new Error('Photo path does not belong to this user.');
+  }
+
+  await setAttemptPhotoPath({
+    userId,
+    attemptId,
+    photoPath,
+    photoSizeBytes: Math.floor(photoSizeBytes),
   });
 }
 

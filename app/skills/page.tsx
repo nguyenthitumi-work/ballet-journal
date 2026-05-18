@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { getSessionContext } from '@/lib/session';
 import { listCategories, listSkills } from '@/lib/db/skills';
 import { CATEGORY_LABELS } from '@/lib/types';
-import type { CategoryId, Difficulty, Skill, SkillCategory } from '@/lib/types';
+import type { CategoryId, Difficulty, ProgressStatus, Skill, SkillCategory } from '@/lib/types';
 import { DifficultyBadge } from './_components/Difficulty';
 import { FilterBar } from './_components/FilterBar';
 
@@ -16,10 +16,26 @@ const ALL_CATEGORY_IDS: CategoryId[] = [
   'conditioning',
 ];
 
+const ALL_PROGRESS_STATUSES: ProgressStatus[] = ['learning', 'practicing', 'mastered'];
+const PROGRESS_STATUS_LABELS: Record<ProgressStatus, string> = {
+  learning: '🌱 Learning',
+  practicing: '🪻 Practicing',
+  mastered: '🌟 Mastered',
+};
+const PROGRESS_STATUS_BADGE_CLASSES: Record<ProgressStatus, string> = {
+  learning: 'bg-amber-50 text-amber-700',
+  practicing: 'bg-blue-50 text-blue-700',
+  mastered: 'bg-emerald-50 text-emerald-700',
+};
+
 const MAX_CARD_TAGS = 3;
 
 function isCategoryId(value: string | undefined): value is CategoryId {
   return typeof value === 'string' && (ALL_CATEGORY_IDS as string[]).includes(value);
+}
+
+function isProgressStatus(value: string | undefined): value is ProgressStatus {
+  return typeof value === 'string' && (ALL_PROGRESS_STATUSES as string[]).includes(value);
 }
 
 function parseDifficulty(value: string | undefined): Difficulty | null {
@@ -35,6 +51,7 @@ function firstParam(value: string | string[] | undefined): string | undefined {
 }
 
 function SkillCard({ skill }: { skill: Skill }) {
+  const statusLabel = PROGRESS_STATUS_LABELS[skill.progressStatus];
   return (
     <Link
       href={`/skills/${skill.id}`}
@@ -44,6 +61,12 @@ function SkillCard({ skill }: { skill: Skill }) {
         <h3 className="text-base font-semibold tracking-tight text-violet-900">
           {skill.name}
         </h3>
+        <span
+          className={`text-[10px] font-medium rounded-full px-1.5 py-0.5 ${PROGRESS_STATUS_BADGE_CLASSES[skill.progressStatus]}`}
+          aria-label={`Progress: ${statusLabel}`}
+        >
+          {statusLabel}
+        </span>
         {skill.isCurrentlyWorkingOn ? (
           <span
             aria-label="You're working on this"
@@ -97,6 +120,8 @@ export default async function SkillsPage(props: SkillsPageProps) {
   const activeDiff = parseDifficulty(firstParam(sp.diff));
   const trainRaw = firstParam(sp.train)?.trim() ?? '';
   const activeTrain = trainRaw.length > 0 ? trainRaw : null;
+  const statusParam = firstParam(sp.status);
+  const activeStatus: ProgressStatus | null = isProgressStatus(statusParam) ? statusParam : null;
 
   const [categories, skills] = await Promise.all([listCategories(), listSkills(userId)]);
 
@@ -110,6 +135,7 @@ export default async function SkillsPage(props: SkillsPageProps) {
     if (activeCat && s.categoryId !== activeCat) return false;
     if (activeDiff && s.difficulty !== activeDiff) return false;
     if (activeTrain && !s.trains.includes(activeTrain)) return false;
+    if (activeStatus && s.progressStatus !== activeStatus) return false;
     if (q.length > 0) {
       const haystack = `${s.name} ${s.description ?? ''} ${s.trains.join(' ')}`.toLowerCase();
       if (!haystack.includes(q)) return false;
@@ -145,17 +171,33 @@ export default async function SkillsPage(props: SkillsPageProps) {
 
       <nav aria-label="Filter by category" className="flex flex-wrap gap-2">
         <CategoryChip
-          href={buildHref({ cat: null, q: qRaw, diff: activeDiff, train: activeTrain })}
+          href={buildHref({ cat: null, q: qRaw, diff: activeDiff, train: activeTrain, status: activeStatus })}
           label="All"
           active={activeCat === null}
         />
         {categories.map((c) => (
           <CategoryChip
             key={c.id}
-            href={buildHref({ cat: c.id, q: qRaw, diff: activeDiff, train: activeTrain })}
+            href={buildHref({ cat: c.id, q: qRaw, diff: activeDiff, train: activeTrain, status: activeStatus })}
             label={c.name}
             color={c.brandColorHex}
             active={activeCat === c.id}
+          />
+        ))}
+      </nav>
+
+      <nav aria-label="Filter by progress status" className="flex flex-wrap gap-2">
+        <CategoryChip
+          href={buildHref({ cat: activeCat, q: qRaw, diff: activeDiff, train: activeTrain, status: null })}
+          label="All"
+          active={activeStatus === null}
+        />
+        {ALL_PROGRESS_STATUSES.map((s) => (
+          <CategoryChip
+            key={s}
+            href={buildHref({ cat: activeCat, q: qRaw, diff: activeDiff, train: activeTrain, status: s })}
+            label={PROGRESS_STATUS_LABELS[s]}
+            active={activeStatus === s}
           />
         ))}
       </nav>
@@ -182,17 +224,20 @@ function buildHref({
   q,
   diff,
   train,
+  status,
 }: {
   cat: CategoryId | null;
   q: string;
   diff: Difficulty | null;
   train: string | null;
+  status: ProgressStatus | null;
 }): string {
   const params = new URLSearchParams();
   if (cat) params.set('cat', cat);
   if (q.length > 0) params.set('q', q);
   if (diff) params.set('diff', String(diff));
   if (train) params.set('train', train);
+  if (status) params.set('status', status);
   const qs = params.toString();
   return qs.length > 0 ? `/skills?${qs}` : '/skills';
 }

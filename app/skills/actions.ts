@@ -2,12 +2,23 @@
 
 import { revalidatePath } from 'next/cache';
 import { getSessionContext } from '@/lib/session';
-import { setFocus, setReferenceUrl } from '@/lib/db/skills';
+import { setFocus, setProgressStatus as dbSetProgressStatus, setReferenceUrl } from '@/lib/db/skills';
+import type { ProgressStatus } from '@/lib/types';
 import { parseYouTubeId } from '@/lib/youtube';
 
 export async function toggleFocus(skillId: string, next: boolean): Promise<void> {
   const { userId } = await getSessionContext();
   await setFocus(userId, skillId, next);
+  revalidatePath('/skills');
+  revalidatePath(`/skills/${skillId}`);
+}
+
+export async function setProgressStatus(
+  skillId: string,
+  next: ProgressStatus,
+): Promise<void> {
+  const { userId } = await getSessionContext();
+  await dbSetProgressStatus(userId, skillId, next);
   revalidatePath('/skills');
   revalidatePath(`/skills/${skillId}`);
 }

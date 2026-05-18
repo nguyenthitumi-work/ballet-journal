@@ -7,12 +7,24 @@ import type { Skill, SkillAttempt } from '@/lib/types';
 import { StreakBanner } from './_components/StreakBanner';
 import { SessionCard } from './_components/SessionCard';
 
-export default async function HistoryPage() {
+interface HistoryPageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0];
+  return value;
+}
+
+export default async function HistoryPage(props: HistoryPageProps) {
   const { userId, profile, onboarded } = await getSessionContext();
 
   if (!onboarded) {
     redirect('/onboarding');
   }
+
+  const sp = await props.searchParams;
+  const milestonesOnly = firstParam(sp.milestones) === '1';
 
   const [sessions, skills] = await Promise.all([
     listSessions(userId),
@@ -35,6 +47,18 @@ export default async function HistoryPage() {
 
   const skillsById: Map<string, Skill> = new Map(skills.map((s) => [s.id, s]));
 
+  // When milestonesOnly is on: keep only sessions that have at least one milestone
+  // attempt, and within those sessions show only the milestone attempts.
+  const visibleSessions = milestonesOnly
+    ? sessions.filter((s) =>
+        (attemptsBySession.get(s.id) ?? []).some((a) => a.isMilestone),
+      )
+    : sessions;
+  const visibleAttemptsFor = (sessionId: string): SkillAttempt[] => {
+    const all = attemptsBySession.get(sessionId) ?? [];
+    return milestonesOnly ? all.filter((a) => a.isMilestone) : all;
+  };
+
   return (
     <section className="flex flex-col gap-6">
       <header>
@@ -43,6 +67,15 @@ export default async function HistoryPage() {
       </header>
 
       <StreakBanner profile={profile} />
+
+      <nav aria-label="Filter history" className="flex flex-wrap gap-2">
+        <FilterChip href="/history" label="All" active={!milestonesOnly} />
+        <FilterChip
+          href="/history?milestones=1"
+          label="⭐ Milestones"
+          active={milestonesOnly}
+        />
+      </nav>
 
       {sessions.length === 0 ? (
         <div className="flex flex-col items-center gap-4 rounded-2xl border border-violet-200 bg-white p-8 text-center shadow-sm">
@@ -57,18 +90,46 @@ export default async function HistoryPage() {
             Start practice
           </Link>
         </div>
+      ) : visibleSessions.length === 0 ? (
+        <p className="rounded-2xl border border-violet-200 bg-white p-5 text-sm text-violet-900/70 shadow-sm">
+          No milestones yet. Tap the ⭐ box during practice to mark one.
+        </p>
       ) : (
         <div className="flex flex-col gap-3">
-          {sessions.map((s) => (
+          {visibleSessions.map((s) => (
             <SessionCard
               key={s.id}
               session={s}
-              attempts={attemptsBySession.get(s.id) ?? []}
+              attempts={visibleAttemptsFor(s.id)}
               skillsById={skillsById}
             />
           ))}
         </div>
       )}
     </section>
+  );
+}
+
+function FilterChip({
+  href,
+  label,
+  active,
+}: {
+  href: string;
+  label: string;
+  active: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-current={active ? 'page' : undefined}
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition ${
+        active
+          ? 'bg-violet-600 text-white shadow-sm'
+          : 'border border-violet-200 bg-white text-violet-700 hover:border-violet-400'
+      }`}
+    >
+      {label}
+    </Link>
   );
 }

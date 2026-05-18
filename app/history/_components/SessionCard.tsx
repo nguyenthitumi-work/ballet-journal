@@ -1,6 +1,7 @@
 import type { PracticeSession, Rating, Skill, SkillAttempt } from '@/lib/types';
 import { CATEGORY_LABELS } from '@/lib/types';
 import AttemptVideo from './AttemptVideo';
+import AttemptPhoto from './AttemptPhoto';
 
 type Props = {
   session: PracticeSession;
@@ -144,7 +145,19 @@ export function SessionCard({ session, attempts, skillsById }: Props) {
                       <span className="text-xs text-violet-900/60">{categoryLabel}</span>
                     )}
                   </div>
-                  <Stars rating={attempt.rating} />
+                  <div className="flex items-center gap-2">
+                    {attempt.isMilestone ? (
+                      <span
+                        aria-label="Milestone"
+                        title="Milestone"
+                        className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800"
+                      >
+                        <span aria-hidden>⭐</span>
+                        Milestone
+                      </span>
+                    ) : null}
+                    <Stars rating={attempt.rating} />
+                  </div>
                 </div>
                 {attempt.notes && attempt.notes.trim() && (
                   <p className="mt-2 text-sm text-violet-900/80">{attempt.notes}</p>
@@ -153,6 +166,12 @@ export function SessionCard({ session, attempts, skillsById }: Props) {
                   <AttemptVideo
                     attemptId={attempt.id}
                     videoPath={attempt.videoPath}
+                  />
+                ) : null}
+                {attempt.photoPath ? (
+                  <AttemptPhoto
+                    attemptId={attempt.id}
+                    photoPath={attempt.photoPath}
                   />
                 ) : null}
               </div>
