@@ -101,7 +101,10 @@ export function SessionCard({ session, attempts, skillsById }: Props) {
   const notesPreview = firstLine(session.overallNotes);
 
   return (
-    <details className="group rounded-2xl border border-violet-200 bg-white p-5 shadow-sm">
+    <details
+      id={`session-${session.id}`}
+      className="group rounded-2xl border border-violet-200 bg-white p-5 shadow-sm scroll-mt-20 target:ring-2 target:ring-amber-300"
+    >
       <summary className="flex cursor-pointer list-none flex-col gap-2 marker:hidden [&::-webkit-details-marker]:hidden">
         <div className="flex items-baseline justify-between gap-3">
           <div className="flex items-baseline gap-2">
