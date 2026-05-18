@@ -84,6 +84,7 @@ export interface PracticeSession {
   durationSeconds: number | null;
   moodRating: Rating | null;
   overallNotes: string | null;
+  orderedSkillIds: string[];
 }
 
 export interface SkillAttempt {
@@ -155,6 +156,7 @@ export interface PracticeSessionRow {
   duration_seconds: number | null;
   mood_rating: number | null;
   overall_notes: string | null;
+  ordered_skill_ids: string[];
 }
 
 export interface SkillAttemptRow {
@@ -226,6 +228,7 @@ export const sessionFromRow = (r: PracticeSessionRow): PracticeSession => ({
   durationSeconds: r.duration_seconds,
   moodRating: r.mood_rating as Rating | null,
   overallNotes: r.overall_notes,
+  orderedSkillIds: r.ordered_skill_ids ?? [],
 });
 
 export const attemptFromRow = (r: SkillAttemptRow): SkillAttempt => ({

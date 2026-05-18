@@ -9,14 +9,19 @@ import type {
   SkillAttemptRow,
 } from '@/lib/types';
 
-export async function startSession(
-  userId: string,
-  planId: string | null,
-): Promise<PracticeSession> {
+export async function startSession(args: {
+  userId: string;
+  planId: string | null;
+  orderedSkillIds: string[];
+}): Promise<PracticeSession> {
   const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from('practice_session')
-    .insert({ user_id: userId, plan_id: planId })
+    .insert({
+      user_id: args.userId,
+      plan_id: args.planId,
+      ordered_skill_ids: args.orderedSkillIds,
+    })
     .select('*')
     .single();
   if (error) throw new Error(error.message);

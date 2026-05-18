@@ -9,8 +9,11 @@ import {
   setAttemptVideoPath,
   startSession,
 } from '@/lib/db/sessions';
+import { getPlan } from '@/lib/db/plans';
+import { listSkills } from '@/lib/db/skills';
 import { getProfile, setStreak } from '@/lib/db/profile';
 import { computeNewStreak, formatLocalDate } from '@/lib/services/streak';
+import { pickDailySuggestion } from '@/lib/services/suggestion';
 import type { Rating } from '@/lib/types';
 
 const LOCAL_TZ = 'America/Los_Angeles';
@@ -25,13 +28,36 @@ export async function startPracticeFromPlan(planId: string): Promise<void> {
     throw new Error('Missing plan id.');
   }
   const { userId } = await getSessionContext();
-  const session = await startSession(userId, planId);
+  const plan = await getPlan(userId, planId);
+  if (plan === null) {
+    throw new Error('Plan not found.');
+  }
+  const session = await startSession({
+    userId,
+    planId,
+    orderedSkillIds: plan.orderedSkillIds,
+  });
   redirect(`/practice/${session.id}`);
 }
 
 export async function startFreePractice(): Promise<void> {
   const { userId } = await getSessionContext();
-  const session = await startSession(userId, null);
+  const skills = await listSkills(userId);
+  const picks = pickDailySuggestion({
+    skills: skills.map((s) => ({
+      id: s.id,
+      name: s.name,
+      categoryId: s.categoryId,
+      isCurrentlyWorkingOn: s.isCurrentlyWorkingOn,
+      lastAttemptedAt: s.lastAttemptedAt ? new Date(s.lastAttemptedAt) : null,
+    })),
+    now: new Date(),
+  });
+  const session = await startSession({
+    userId,
+    planId: null,
+    orderedSkillIds: picks.map((p) => p.skillId),
+  });
   redirect(`/practice/${session.id}`);
 }
 

@@ -5,39 +5,13 @@ import {
   getSession,
   listAttemptsForSession,
 } from '@/lib/db/sessions';
-import { getPlan } from '@/lib/db/plans';
-import { getSkill, listSkills } from '@/lib/db/skills';
-import { pickDailySuggestion } from '@/lib/services/suggestion';
+import { getSkill } from '@/lib/db/skills';
 import { CATEGORY_LABELS } from '@/lib/types';
 import type { Skill } from '@/lib/types';
 import PracticeLoop from '../_components/PracticeLoop';
 import FinishSession from '../_components/FinishSession';
 
 const CARD_CLASS = 'rounded-2xl border border-violet-200 bg-white p-6 shadow-sm';
-
-async function resolveSkillOrder(
-  userId: string,
-  planId: string | null,
-): Promise<string[]> {
-  if (planId !== null) {
-    const plan = await getPlan(userId, planId);
-    if (plan === null) return [];
-    return plan.orderedSkillIds;
-  }
-
-  const allSkills = await listSkills(userId);
-  const picks = pickDailySuggestion({
-    skills: allSkills.map((s) => ({
-      id: s.id,
-      name: s.name,
-      categoryId: s.categoryId,
-      isCurrentlyWorkingOn: s.isCurrentlyWorkingOn,
-      lastAttemptedAt: s.lastAttemptedAt ? new Date(s.lastAttemptedAt) : null,
-    })),
-    now: new Date(),
-  });
-  return picks.map((p) => p.skillId);
-}
 
 export default async function PracticeSessionPage(props: {
   params: Promise<{ sessionId: string }>;
@@ -80,7 +54,7 @@ export default async function PracticeSessionPage(props: {
     );
   }
 
-  const skillOrder = await resolveSkillOrder(userId, session.planId);
+  const skillOrder = session.orderedSkillIds;
   const attempts = await listAttemptsForSession(sessionId);
   const attemptedSet = new Set(attempts.map((a) => a.skillId));
 
