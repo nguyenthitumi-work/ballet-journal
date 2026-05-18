@@ -14,7 +14,7 @@ import { getPlan } from '@/lib/db/plans';
 import { listSkills } from '@/lib/db/skills';
 import { getProfile, setStreak } from '@/lib/db/profile';
 import { computeNewStreak, formatLocalDate } from '@/lib/services/streak';
-import { pickDailySuggestion } from '@/lib/services/suggestion';
+import { localDayOfWeek, pickDailySuggestion } from '@/lib/services/suggestion';
 import type { Rating } from '@/lib/types';
 
 const LOCAL_TZ = 'America/Los_Angeles';
@@ -44,6 +44,7 @@ export async function startPracticeFromPlan(planId: string): Promise<void> {
 export async function startFreePractice(): Promise<void> {
   const { userId, profile } = await getSessionContext();
   const skills = await listSkills(userId);
+  const now = new Date();
   const picks = pickDailySuggestion({
     skills: skills.map((s) => ({
       id: s.id,
@@ -55,7 +56,8 @@ export async function startFreePractice(): Promise<void> {
       lastAttemptedAt: s.lastAttemptedAt ? new Date(s.lastAttemptedAt) : null,
     })),
     userLevel: profile.level,
-    now: new Date(),
+    now,
+    dayOfWeek: localDayOfWeek(now, LOCAL_TZ),
   });
   const session = await startSession({
     userId,

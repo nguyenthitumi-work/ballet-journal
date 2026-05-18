@@ -1,4 +1,5 @@
 import type { CategoryId, Level, ProgressStatus } from '@/lib/types';
+import { formatLocalDate } from '@/lib/services/streak';
 
 type SkillInput = {
   id: string;
@@ -12,6 +13,34 @@ type SkillInput = {
 
 export type SuggestionReason = 'focus' | 'stale' | 'rediscovery' | 'default';
 export type SuggestionPick = { skillId: string; reason: SuggestionReason };
+
+export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+export type DayTemplate = {
+  theme: string;
+  emphasis: CategoryId[];
+  targetCount?: number;
+};
+
+// Classic ballet week. Emphasis categories are a *soft* bias applied on top of
+// the focus/stale/rediscovery logic — they reorder within each bucket but don't
+// exclude other categories. Friday and Saturday intentionally leave emphasis
+// empty so the bucket logic alone decides (focus-heavy on Fri, full mix on Sat).
+export const WEEKLY_TEMPLATE: Record<DayOfWeek, DayTemplate> = {
+  0: { theme: 'Stretches', emphasis: ['stretches'], targetCount: 4 },
+  1: { theme: 'Barre', emphasis: ['barre'] },
+  2: { theme: 'Center', emphasis: ['center'] },
+  3: { theme: 'Jumps + Turns', emphasis: ['jumps', 'turns'] },
+  4: { theme: 'Stretches + Conditioning', emphasis: ['stretches', 'conditioning'] },
+  5: { theme: 'Focus skills', emphasis: [] },
+  6: { theme: 'Full mix', emphasis: [] },
+};
+
+export function localDayOfWeek(now: Date, tz: string): DayOfWeek {
+  const ymd = formatLocalDate(now, tz);
+  const [y, m, d] = ymd.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).getUTCDay() as DayOfWeek;
+}
 
 const STALE_DAYS = 7;
 const REDISCOVERY_DAYS = 30;
@@ -38,6 +67,21 @@ function shuffle<T>(items: T[], rng: () => number): T[] {
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
+}
+
+// Stable reorder that pulls emphasis-category items to the front while keeping
+// the relative order of everything else (so the shuffle upstream still drives
+// randomness within each group).
+function sortByEmphasis(items: SkillInput[], emphasis: CategoryId[]): SkillInput[] {
+  if (emphasis.length === 0) return items;
+  const set = new Set(emphasis);
+  const front: SkillInput[] = [];
+  const back: SkillInput[] = [];
+  for (const s of items) {
+    if (set.has(s.categoryId)) front.push(s);
+    else back.push(s);
+  }
+  return front.concat(back);
 }
 
 // A skill is "in scope" for the user's curriculum level when it is at-level,
@@ -111,14 +155,19 @@ export function pickDailySuggestion(args: {
   skills: SkillInput[];
   userLevel: Level;
   now: Date;
+  dayOfWeek?: DayOfWeek;
   targetCount?: number;
   rng?: () => number;
 }): SuggestionPick[] {
-  const { skills, userLevel, now, targetCount = 6, rng = Math.random } = args;
+  const { skills, userLevel, now, dayOfWeek, rng = Math.random } = args;
   if (skills.length === 0) return [];
 
   const pool = filterToLevelPool(skills, userLevel);
   if (pool.length === 0) return [];
+
+  const template = dayOfWeek !== undefined ? WEEKLY_TEMPLATE[dayOfWeek] : null;
+  const emphasis = template?.emphasis ?? [];
+  const targetCount = args.targetCount ?? template?.targetCount ?? 6;
 
   const focus = pool.filter((s) => s.isCurrentlyWorkingOn);
   const stale = pool.filter((s) => daysSince(s.lastAttemptedAt, now) >= STALE_DAYS);
@@ -134,15 +183,17 @@ export function pickDailySuggestion(args: {
   const catCounts = new Map<CategoryId, number>();
   const cap = pool.length < targetCount * 2 ? RELAXED_CAT_CAP : DEFAULT_CAT_CAP;
 
+  const prep = (items: SkillInput[]) => sortByEmphasis(shuffle(items, rng), emphasis);
+
   const picks: SuggestionPick[] = [];
 
   if (focus.length < MIN_FOCUS_SKILLS) {
     picks.push(
-      ...takeWithCategoryCap(shuffle(focus, rng), focus.length, 'focus', catCounts, taken, cap),
+      ...takeWithCategoryCap(prep(focus), focus.length, 'focus', catCounts, taken, cap),
     );
     picks.push(
       ...takeWithCategoryCap(
-        shuffle(stale, rng),
+        prep(stale),
         targetCount - picks.length,
         'stale',
         catCounts,
@@ -152,7 +203,7 @@ export function pickDailySuggestion(args: {
     );
     picks.push(
       ...takeWithCategoryCap(
-        shuffle(pool, rng),
+        prep(pool),
         targetCount - picks.length,
         'default',
         catCounts,
@@ -162,14 +213,14 @@ export function pickDailySuggestion(args: {
     );
   } else {
     picks.push(
-      ...takeWithCategoryCap(shuffle(focus, rng), focusTarget, 'focus', catCounts, taken, cap),
+      ...takeWithCategoryCap(prep(focus), focusTarget, 'focus', catCounts, taken, cap),
     );
     picks.push(
-      ...takeWithCategoryCap(shuffle(stale, rng), staleTarget, 'stale', catCounts, taken, cap),
+      ...takeWithCategoryCap(prep(stale), staleTarget, 'stale', catCounts, taken, cap),
     );
     picks.push(
       ...takeWithCategoryCap(
-        shuffle(rediscovery, rng),
+        prep(rediscovery),
         rediscoveryTarget,
         'rediscovery',
         catCounts,
@@ -180,7 +231,7 @@ export function pickDailySuggestion(args: {
     if (picks.length < targetCount) {
       picks.push(
         ...takeWithCategoryCap(
-          shuffle(pool, rng),
+          prep(pool),
           targetCount - picks.length,
           'default',
           catCounts,

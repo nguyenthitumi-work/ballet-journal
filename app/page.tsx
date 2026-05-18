@@ -1,9 +1,25 @@
 import Link from 'next/link';
 import { getSessionContext } from '@/lib/session';
 import { listSkills } from '@/lib/db/skills';
-import { pickDailySuggestion, type SuggestionReason } from '@/lib/services/suggestion';
+import {
+  WEEKLY_TEMPLATE,
+  localDayOfWeek,
+  pickDailySuggestion,
+  type SuggestionReason,
+} from '@/lib/services/suggestion';
 import { CATEGORY_LABELS } from '@/lib/types';
 import type { Skill } from '@/lib/types';
+
+const LOCAL_TZ = 'America/Los_Angeles';
+const WEEKDAY_LABELS = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+] as const;
 
 const REASON_LABELS: Record<SuggestionReason, string> = {
   focus: 'Working on',
@@ -54,6 +70,8 @@ export default async function HomePage() {
   }
 
   const now = new Date();
+  const dayOfWeek = localDayOfWeek(now, LOCAL_TZ);
+  const dayTemplate = WEEKLY_TEMPLATE[dayOfWeek];
   const skills = await listSkills(userId);
   const suggestionInput = skills.map((s) => ({
     id: s.id,
@@ -68,6 +86,7 @@ export default async function HomePage() {
     skills: suggestionInput,
     userLevel: profile.level,
     now,
+    dayOfWeek,
   });
   const skillById = new Map<string, Skill>(skills.map((s) => [s.id, s]));
 
@@ -91,13 +110,16 @@ export default async function HomePage() {
 
       <div className="rounded-2xl border border-violet-200 bg-white p-5 shadow-sm">
         <p className="text-sm font-medium text-violet-900/70">Today&apos;s practice</p>
+        <p className="mt-1 text-xs font-medium uppercase tracking-wide text-violet-700/80">
+          {WEEKDAY_LABELS[dayOfWeek]} — {dayTemplate.theme}
+        </p>
         {picks.length === 0 ? (
           <p className="mt-2 text-violet-900/80">
             Pick some focus skills from the Skills tab to get personalized suggestions.
           </p>
         ) : (
           <>
-            <p className="mt-1 text-violet-900/80">
+            <p className="mt-2 text-violet-900/80">
               Here&apos;s a {picks.length}-skill warmup pulled from your focus list and a few
               stale ones.
             </p>
