@@ -16,6 +16,7 @@ import { getProfile, setStreak } from '@/lib/db/profile';
 import { computeNewStreak, formatLocalDate } from '@/lib/services/streak';
 import { localDayOfWeek, pickDailySuggestion } from '@/lib/services/suggestion';
 import { computeLockStates } from '@/lib/services/unlock';
+import { evaluateUnlocks, markRevealed, nextQueuedReveal } from '@/lib/db/rewards';
 import type { Rating } from '@/lib/types';
 
 const LOCAL_TZ = 'America/Los_Angeles';
@@ -213,7 +214,30 @@ export async function finishSession(
     await setStreak(userId, newStreak, updatedLastPracticeDate);
   }
 
+  // Non-critical side effect: queue any newly-earned reward scenes for reveal.
+  // Idempotent — a transient failure is caught up on the next session end.
+  let pendingReveal = false;
+  try {
+    await evaluateUnlocks(userId);
+    pendingReveal = (await nextQueuedReveal(userId)) !== null;
+  } catch (err) {
+    console.error('evaluateUnlocks failed after finishSession', err);
+  }
+
   revalidatePath('/');
   revalidatePath('/history');
+  if (pendingReveal) {
+    redirect(`/practice/${sessionId}/reward`);
+  }
+  redirect('/history');
+}
+
+export async function markRevealAndContinue(sceneId: string): Promise<void> {
+  if (typeof sceneId !== 'string' || sceneId.length === 0) {
+    throw new Error('Missing scene id.');
+  }
+  const { userId } = await getSessionContext();
+  await markRevealed(userId, sceneId);
+  revalidatePath('/');
   redirect('/history');
 }

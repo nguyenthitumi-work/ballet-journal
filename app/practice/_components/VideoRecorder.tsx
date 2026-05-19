@@ -86,7 +86,8 @@ async function waitForVideoMetadata(video: HTMLVideoElement): Promise<void> {
 
 export default function VideoRecorder({ onChange, disabled = false }: Props) {
   const [status, setStatus] = useState<Status>('idle');
-  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [audioEnabled, setAudioEnabled] = useState(true);
+  const [hasAudioTrack, setHasAudioTrack] = useState(false);
   const [facing, setFacing] = useState<Facing>('user');
   const [flipping, setFlipping] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -185,13 +186,36 @@ export default function VideoRecorder({ onChange, disabled = false }: Props) {
     setError(null);
     setStatus('requesting');
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: facing } },
-        audio: audioEnabled,
-      });
+      // Try with audio first; fall back to video-only if the mic is unavailable
+      // or permission was denied. Audio can be muted live via the in-recording
+      // toggle, so we always attempt to acquire it up front.
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: facing } },
+          audio: true,
+        });
+      } catch (audioErr) {
+        if (
+          audioErr instanceof DOMException &&
+          (audioErr.name === 'NotAllowedError' || audioErr.name === 'NotFoundError')
+        ) {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: facing } },
+            audio: false,
+          });
+        } else {
+          throw audioErr;
+        }
+      }
       streamRef.current = stream;
       videoTrackRef.current = stream.getVideoTracks()[0] ?? null;
       audioTrackRef.current = stream.getAudioTracks()[0] ?? null;
+      const hasAudio = audioTrackRef.current !== null;
+      setHasAudioTrack(hasAudio);
+      if (hasAudio && audioTrackRef.current) {
+        audioTrackRef.current.enabled = audioEnabled;
+      }
 
       // Offscreen source video — drives the canvas via drawImage. Kept off the
       // DOM so we don't depend on React render timing for the recorder setup.
@@ -300,6 +324,16 @@ export default function VideoRecorder({ onChange, disabled = false }: Props) {
     }
   }, []);
 
+  const handleToggleAudio = useCallback(() => {
+    setAudioEnabled((prev) => {
+      const next = !prev;
+      if (audioTrackRef.current) {
+        audioTrackRef.current.enabled = next;
+      }
+      return next;
+    });
+  }, []);
+
   const handleFlip = useCallback(async () => {
     if (flipping) return;
     if (status !== 'recording') return;
@@ -388,50 +422,6 @@ export default function VideoRecorder({ onChange, disabled = false }: Props) {
           >
             🎥 Record video
           </button>
-          <div
-            role="radiogroup"
-            aria-label="Camera"
-            className="inline-flex overflow-hidden rounded-full border border-violet-300 text-sm"
-          >
-            <button
-              type="button"
-              role="radio"
-              aria-checked={facing === 'user'}
-              onClick={() => setFacing('user')}
-              disabled={disabled}
-              className={`px-3 py-1.5 ${
-                facing === 'user'
-                  ? 'bg-violet-600 text-white'
-                  : 'bg-white text-violet-800 hover:bg-violet-50'
-              } disabled:opacity-50`}
-            >
-              Front
-            </button>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={facing === 'environment'}
-              onClick={() => setFacing('environment')}
-              disabled={disabled}
-              className={`px-3 py-1.5 ${
-                facing === 'environment'
-                  ? 'bg-violet-600 text-white'
-                  : 'bg-white text-violet-800 hover:bg-violet-50'
-              } disabled:opacity-50`}
-            >
-              Back
-            </button>
-          </div>
-          <label className="flex items-center gap-2 text-sm text-violet-900/80">
-            <input
-              type="checkbox"
-              checked={audioEnabled}
-              onChange={(e) => setAudioEnabled(e.target.checked)}
-              disabled={disabled}
-              className="h-4 w-4 accent-violet-600"
-            />
-            Include audio
-          </label>
         </div>
       ) : null}
 
@@ -456,16 +446,30 @@ export default function VideoRecorder({ onChange, disabled = false }: Props) {
               />
               <span className="font-mono">{formatMmSs(elapsed)}</span>
             </div>
-            <button
-              type="button"
-              onClick={() => void handleFlip()}
-              disabled={flipping}
-              aria-label="Flip camera"
-              className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-3 py-1 text-xs font-medium text-white hover:bg-black/80 disabled:opacity-50"
-            >
-              <span aria-hidden>🔄</span>
-              {flipping ? 'Flipping…' : 'Flip'}
-            </button>
+            <div className="absolute top-2 right-2 flex items-center gap-1.5">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={audioEnabled}
+                onClick={handleToggleAudio}
+                disabled={!hasAudioTrack}
+                aria-label={audioEnabled ? 'Mute audio' : 'Unmute audio'}
+                className="inline-flex items-center gap-1 rounded-full bg-black/60 px-3 py-1 text-xs font-medium text-white hover:bg-black/80 disabled:opacity-50"
+              >
+                <span aria-hidden>{audioEnabled && hasAudioTrack ? '🔊' : '🔇'}</span>
+                {hasAudioTrack ? (audioEnabled ? 'Audio on' : 'Audio off') : 'No mic'}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleFlip()}
+                disabled={flipping}
+                aria-label="Flip camera"
+                className="inline-flex items-center gap-1 rounded-full bg-black/60 px-3 py-1 text-xs font-medium text-white hover:bg-black/80 disabled:opacity-50"
+              >
+                <span aria-hidden>🔄</span>
+                {flipping ? 'Flipping…' : 'Flip'}
+              </button>
+            </div>
           </div>
           <button
             type="button"

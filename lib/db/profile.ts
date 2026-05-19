@@ -49,6 +49,15 @@ export async function setStreak(
   if (error) throw new Error(error.message);
 }
 
+export async function markRewardsBackfilled(userId: string): Promise<void> {
+  const supabase = await getServerSupabase();
+  const { error } = await supabase
+    .from('user_profile')
+    .update({ rewards_backfilled_at: new Date().toISOString() })
+    .eq('user_id', userId);
+  if (error) throw new Error(error.message);
+}
+
 export function isOnboarded(p: UserProfile | null): boolean {
   return Boolean(
     p &&

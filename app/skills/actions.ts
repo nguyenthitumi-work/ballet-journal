@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { getSessionContext } from '@/lib/session';
 import { setFocus, setProgressStatus as dbSetProgressStatus, setReferenceUrl } from '@/lib/db/skills';
+import { evaluateUnlocks } from '@/lib/db/rewards';
 import type { ProgressStatus } from '@/lib/types';
 import { parseYouTubeId } from '@/lib/youtube';
 
@@ -19,6 +20,17 @@ export async function setProgressStatus(
 ): Promise<void> {
   const { userId } = await getSessionContext();
   await dbSetProgressStatus(userId, skillId, next);
+
+  // Mastery crossing a mastered_count threshold queues a reward scene for the
+  // next session-end reveal. Non-critical — swallow failures.
+  if (next === 'mastered') {
+    try {
+      await evaluateUnlocks(userId);
+    } catch (err) {
+      console.error('evaluateUnlocks failed after setProgressStatus', err);
+    }
+  }
+
   revalidatePath('/skills');
   revalidatePath(`/skills/${skillId}`);
 }

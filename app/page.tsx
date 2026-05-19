@@ -1,7 +1,10 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { getSessionContext } from '@/lib/session';
 import { countDistinctSkillsToday } from '@/lib/db/sessions';
 import { listSkills } from '@/lib/db/skills';
+import { listUnlockedSceneIds } from '@/lib/db/rewards';
+import { SEED_REWARD_JOURNEYS, SEED_REWARD_SCENES } from '@/lib/data/seedRewards';
 import {
   WEEKLY_TEMPLATE,
   localDayOfWeek,
@@ -12,6 +15,8 @@ import { pickNextSkill, type NextSkillReason } from '@/lib/services/nextSkill';
 import { computeLockStates } from '@/lib/services/unlock';
 import { CATEGORY_LABELS } from '@/lib/types';
 import type { Skill } from '@/lib/types';
+
+const PRIMARY_JOURNEY_ID = 'swan-lake';
 
 const LOCAL_TZ = 'America/Los_Angeles';
 const WEEKDAY_LABELS = [
@@ -88,10 +93,16 @@ export default async function HomePage() {
   const now = new Date();
   const dayOfWeek = localDayOfWeek(now, LOCAL_TZ);
   const dayTemplate = WEEKLY_TEMPLATE[dayOfWeek];
-  const [skills, todaysCount] = await Promise.all([
+  const [skills, todaysCount, unlockedSceneIds] = await Promise.all([
     listSkills(userId),
     countDistinctSkillsToday(userId, LOCAL_TZ),
+    listUnlockedSceneIds(userId),
   ]);
+  const journey = SEED_REWARD_JOURNEYS.find((j) => j.id === PRIMARY_JOURNEY_ID);
+  const journeyScenes = SEED_REWARD_SCENES
+    .filter((s) => s.journeyId === PRIMARY_JOURNEY_ID)
+    .sort((a, b) => a.orderIndex - b.orderIndex);
+  const unlockedInJourney = journeyScenes.filter((s) => unlockedSceneIds.has(s.id)).length;
   const lockStates = computeLockStates(skills);
   const goal = profile.dailySkillGoal;
   const goalMet = todaysCount >= goal;
@@ -243,6 +254,51 @@ export default async function HomePage() {
           </>
         )}
       </div>
+
+      <Link
+        href="/rewards"
+        className="rounded-2xl border border-violet-200 bg-white p-5 shadow-sm transition hover:border-violet-400"
+      >
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="text-sm font-medium text-violet-900/70">Your journey</p>
+          <p className="text-xs text-violet-900/60">
+            {unlockedInJourney} / {journeyScenes.length} scenes
+          </p>
+        </div>
+        {journey ? (
+          <p className="mt-1 text-xs font-medium uppercase tracking-wide text-violet-700/80">
+            {journey.title}
+          </p>
+        ) : null}
+        <ul
+          className="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-6"
+          aria-label={`${unlockedInJourney} of ${journeyScenes.length} scenes unlocked`}
+        >
+          {journeyScenes.map((scene) => {
+            const unlocked = unlockedSceneIds.has(scene.id);
+            return (
+              <li
+                key={scene.id}
+                className="relative aspect-[3/4] overflow-hidden rounded-md border border-violet-100"
+              >
+                <Image
+                  src={scene.artworkPath}
+                  alt={unlocked ? scene.title : ''}
+                  fill
+                  sizes="(min-width: 640px) 80px, 70px"
+                  unoptimized
+                  className={unlocked ? '' : 'opacity-30 grayscale'}
+                />
+              </li>
+            );
+          })}
+        </ul>
+        {unlockedInJourney === 0 ? (
+          <p className="mt-3 text-sm text-violet-900/70">
+            Practice to start filling your journey.
+          </p>
+        ) : null}
+      </Link>
 
       <div className="grid grid-cols-2 gap-3 text-center text-sm sm:grid-cols-4">
         <Link
