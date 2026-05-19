@@ -244,7 +244,7 @@ export default async function HomePage() {
         )}
       </div>
 
-      <div className="grid grid-cols-3 gap-3 text-center text-sm">
+      <div className="grid grid-cols-2 gap-3 text-center text-sm sm:grid-cols-4">
         <Link
           href="/skills"
           className="rounded-xl border border-violet-200 bg-white px-3 py-3 transition hover:border-violet-400"
@@ -256,6 +256,12 @@ export default async function HomePage() {
           className="rounded-xl border border-violet-200 bg-white px-3 py-3 transition hover:border-violet-400"
         >
           Practice plans
+        </Link>
+        <Link
+          href="/badges"
+          className="rounded-xl border border-violet-200 bg-white px-3 py-3 transition hover:border-violet-400"
+        >
+          Badges
         </Link>
         <Link
           href="/history"

@@ -295,6 +295,18 @@ export async function clearAllUserVideoPaths(userId: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+export async function hasAnyMilestone(userId: string): Promise<boolean> {
+  const supabase = await getServerSupabase();
+  const { data, error } = await supabase
+    .from('skill_attempt')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('is_milestone', true)
+    .limit(1);
+  if (error) throw new Error(error.message);
+  return (data ?? []).length > 0;
+}
+
 // Number of distinct skills the user has attempted today (in their TZ). Used
 // for the daily practice goal on the home page. Pads the SQL filter to a
 // 48-hour UTC window so we don't have to compute TZ-aware UTC bounds; the
