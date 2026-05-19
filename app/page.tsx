@@ -80,7 +80,7 @@ export default async function HomePage() {
   if (!onboarded) {
     return (
       <section className="flex flex-col items-center gap-6 py-12 text-center">
-        <h1 className="text-3xl font-semibold tracking-tight">Welcome to Plié</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Welcome to Ballet-journal</h1>
         <p className="max-w-md text-violet-900/80">
           A tiny notebook for tracking your ballet practice. Let&apos;s set up your profile.
         </p>

@@ -28,7 +28,7 @@ export function NavBar({ email }: NavBarProps) {
           href="/"
           className="hidden text-lg font-semibold tracking-tight text-violet-700 sm:block"
         >
-          Plié
+          Ballet-journal
         </Link>
         <ul className="flex w-full items-center justify-around gap-1 sm:w-auto sm:gap-3">
           {PRIMARY_TABS.map((t) => (

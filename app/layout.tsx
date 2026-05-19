@@ -10,7 +10,7 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: 'Plié',
+  title: 'Ballet-journal',
   description: 'A tiny notebook for tracking ballet practice.',
 };
 
