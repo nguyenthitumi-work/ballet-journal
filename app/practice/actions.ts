@@ -15,6 +15,7 @@ import { listSkills } from '@/lib/db/skills';
 import { getProfile, setStreak } from '@/lib/db/profile';
 import { computeNewStreak, formatLocalDate } from '@/lib/services/streak';
 import { localDayOfWeek, pickDailySuggestion } from '@/lib/services/suggestion';
+import { computeLockStates } from '@/lib/services/unlock';
 import type { Rating } from '@/lib/types';
 
 const LOCAL_TZ = 'America/Los_Angeles';
@@ -44,6 +45,7 @@ export async function startPracticeFromPlan(planId: string): Promise<void> {
 export async function startFreePractice(): Promise<void> {
   const { userId, profile } = await getSessionContext();
   const skills = await listSkills(userId);
+  const lockStates = computeLockStates(skills);
   const now = new Date();
   const picks = pickDailySuggestion({
     skills: skills.map((s) => ({
@@ -54,6 +56,7 @@ export async function startFreePractice(): Promise<void> {
       progressStatus: s.progressStatus,
       isCurrentlyWorkingOn: s.isCurrentlyWorkingOn,
       lastAttemptedAt: s.lastAttemptedAt ? new Date(s.lastAttemptedAt) : null,
+      isLocked: lockStates.get(s.id)?.locked === true,
     })),
     userLevel: profile.level,
     now,

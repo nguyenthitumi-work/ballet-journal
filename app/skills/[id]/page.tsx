@@ -2,7 +2,13 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSessionContext } from '@/lib/session';
 import { listAttemptsForSkill } from '@/lib/db/sessions';
-import { getSkill, listCategories, setReferenceUrlSuggestion } from '@/lib/db/skills';
+import {
+  getSkill,
+  listCategories,
+  listSkills,
+  setReferenceUrlSuggestion,
+} from '@/lib/db/skills';
+import { computeLockStates } from '@/lib/services/unlock';
 import { CATEGORY_LABELS } from '@/lib/types';
 import { fetchFirstYouTubeVideoUrl } from '@/lib/youtube';
 import { AttemptsTimeline } from '../_components/AttemptsTimeline';
@@ -33,10 +39,11 @@ export default async function SkillDetailPage(props: SkillDetailPageProps) {
   if (!onboarded) redirect('/onboarding');
 
   const { id } = await props.params;
-  const [skill, categories, attempts] = await Promise.all([
+  const [skill, categories, attempts, allSkills] = await Promise.all([
     getSkill(userId, id),
     listCategories(),
     listAttemptsForSkill(userId, id),
+    listSkills(userId),
   ]);
 
   if (!skill) {
@@ -60,6 +67,13 @@ export default async function SkillDetailPage(props: SkillDetailPageProps) {
 
   const category = categories.find((c) => c.id === skill.categoryId);
   const categoryLabel = CATEGORY_LABELS[skill.categoryId] ?? category?.name ?? skill.categoryId;
+
+  const lockState = computeLockStates(allSkills).get(skill.id) ?? { locked: false };
+  const missingPrereqSkills = lockState.locked
+    ? lockState.missingPrereqNames
+        .map((name) => allSkills.find((s) => s.name === name))
+        .filter((s): s is NonNullable<typeof s> => s !== undefined)
+    : [];
 
   // Lazy first-view fetch of a YouTube suggestion. Runs only when no manual URL is set
   // AND we have never tried before. Failures are swallowed so a bad API key or network
@@ -121,6 +135,31 @@ export default async function SkillDetailPage(props: SkillDetailPageProps) {
           <span>{humanizeDuration(skill.defaultDurationSeconds)}</span>
         </div>
       </header>
+
+      {lockState.locked ? (
+        <div
+          className="rounded-2xl border border-violet-200 bg-violet-50 p-4 text-sm text-violet-900"
+          role="note"
+          aria-label="Locked skill"
+        >
+          <p className="font-medium">
+            <span aria-hidden className="mr-1">🔒</span>
+            Locked — master these first
+          </p>
+          <ul className="mt-2 flex flex-wrap gap-2">
+            {missingPrereqSkills.map((s) => (
+              <li key={s.id}>
+                <Link
+                  href={`/skills/${s.id}`}
+                  className="inline-flex rounded-full bg-white px-3 py-1 text-xs font-medium text-violet-700 hover:bg-violet-100"
+                >
+                  {s.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-4">
         <FocusToggle skillId={skill.id} initial={skill.isCurrentlyWorkingOn} />

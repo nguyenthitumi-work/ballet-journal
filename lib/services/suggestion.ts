@@ -9,6 +9,7 @@ type SkillInput = {
   progressStatus: ProgressStatus;
   isCurrentlyWorkingOn: boolean;
   lastAttemptedAt: Date | null;
+  isLocked: boolean;
 };
 
 export type SuggestionReason = 'focus' | 'stale' | 'rediscovery' | 'default';
@@ -91,6 +92,10 @@ function sortByEmphasis(items: SkillInput[], emphasis: CategoryId[]): SkillInput
 function filterToLevelPool(skills: SkillInput[], userLevel: Level): SkillInput[] {
   const userRank = LEVEL_ORDER[userLevel];
   return skills.filter((s) => {
+    // Locked skills (prereqs not yet mastered) are never suggested. The catalog
+    // still shows them dimmed so the user can peek — this filter only narrows
+    // the daily picker.
+    if (s.isLocked) return false;
     const rank = LEVEL_ORDER[s.level];
     if (rank === userRank) return true;
     if (rank > userRank) return true;

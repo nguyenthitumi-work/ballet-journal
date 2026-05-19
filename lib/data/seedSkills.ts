@@ -17,6 +17,10 @@ export type SeedSkill = {
   difficulty: Difficulty;
   level: Level;
   defaultDurationSeconds: number;
+  // Names of skills that must be mastered before this one unlocks.
+  // Must match another SEED_SKILLS[].name exactly. Foundations have none.
+  // When renaming a skill, update every prerequisites entry that points at it.
+  prerequisites?: string[];
 };
 
 export const SEED_SKILLS: SeedSkill[] = [
@@ -49,6 +53,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 1,
     level: 'Beginner',
     defaultDurationSeconds: 150,
+    prerequisites: ['Demi & Grand Pliés'],
   },
   {
     name: 'Dégagés',
@@ -64,6 +69,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 2,
     level: 'Beginner',
     defaultDurationSeconds: 120,
+    prerequisites: ['Tendus'],
   },
   {
     name: 'Rond de Jambe à Terre',
@@ -79,6 +85,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 2,
     level: 'Beginner',
     defaultDurationSeconds: 150,
+    prerequisites: ['Tendus'],
   },
   {
     name: 'Fondus',
@@ -94,6 +101,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 3,
     level: 'Intermediate',
     defaultDurationSeconds: 150,
+    prerequisites: ['Demi & Grand Pliés', 'Tendus'],
   },
   {
     name: 'Frappés',
@@ -109,6 +117,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 3,
     level: 'Intermediate',
     defaultDurationSeconds: 120,
+    prerequisites: ['Dégagés'],
   },
   {
     name: 'Développé',
@@ -124,6 +133,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 3,
     level: 'Intermediate',
     defaultDurationSeconds: 150,
+    prerequisites: ['Fondus', 'Passé Balance Hold'],
   },
   {
     name: 'Grand Battement',
@@ -139,6 +149,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 2,
     level: 'Beginner',
     defaultDurationSeconds: 120,
+    prerequisites: ['Tendus', 'Dégagés'],
   },
   {
     name: 'Port de Bras',
@@ -169,6 +180,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 2,
     level: 'Beginner',
     defaultDurationSeconds: 120,
+    prerequisites: ['Demi & Grand Pliés'],
   },
   {
     name: 'Pas de Bourrée',
@@ -184,6 +196,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 2,
     level: 'Beginner',
     defaultDurationSeconds: 120,
+    prerequisites: ['Relevés at the Barre'],
   },
   {
     name: 'Soutenu en Tournant',
@@ -199,6 +212,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 3,
     level: 'Intermediate',
     defaultDurationSeconds: 120,
+    prerequisites: ['Relevés at the Barre', 'Quarter & Half Turns (Prep)'],
   },
   {
     name: 'Adagio Basics',
@@ -214,6 +228,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 3,
     level: 'Intermediate',
     defaultDurationSeconds: 180,
+    prerequisites: ['Passé Balance Hold', 'Développé'],
   },
   {
     name: 'Chassé',
@@ -229,6 +244,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 2,
     level: 'Beginner',
     defaultDurationSeconds: 90,
+    prerequisites: ['Demi & Grand Pliés'],
   },
   {
     name: 'Sautés',
@@ -244,6 +260,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 1,
     level: 'Beginner',
     defaultDurationSeconds: 90,
+    prerequisites: ['Demi & Grand Pliés', 'Relevés at the Barre'],
   },
   {
     name: 'Échappés Sautés',
@@ -259,6 +276,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 2,
     level: 'Beginner',
     defaultDurationSeconds: 90,
+    prerequisites: ['Sautés'],
   },
   {
     name: 'Changements',
@@ -274,6 +292,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 2,
     level: 'Beginner',
     defaultDurationSeconds: 90,
+    prerequisites: ['Sautés'],
   },
   {
     name: 'Assemblé',
@@ -289,6 +308,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 3,
     level: 'Intermediate',
     defaultDurationSeconds: 120,
+    prerequisites: ['Sautés', 'Dégagés'],
   },
   {
     name: 'Jeté',
@@ -304,6 +324,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 3,
     level: 'Intermediate',
     defaultDurationSeconds: 120,
+    prerequisites: ['Sautés', 'Dégagés'],
   },
   {
     name: 'Sissonne',
@@ -319,6 +340,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 3,
     level: 'Intermediate',
     defaultDurationSeconds: 120,
+    prerequisites: ['Sautés'],
   },
   {
     name: 'Grand Jeté',
@@ -334,6 +356,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 4,
     level: 'Advanced',
     defaultDurationSeconds: 180,
+    prerequisites: ['Jeté', 'Grand Battement'],
   },
   {
     name: 'Pirouette en Dehors',
@@ -349,6 +372,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 3,
     level: 'Intermediate',
     defaultDurationSeconds: 180,
+    prerequisites: ['Passé Balance Hold', 'Quarter & Half Turns (Prep)'],
   },
   {
     name: 'Pirouette en Dedans',
@@ -364,6 +388,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 4,
     level: 'Advanced',
     defaultDurationSeconds: 180,
+    prerequisites: ['Pirouette en Dehors'],
   },
   {
     name: 'Piqué Turns',
@@ -379,6 +404,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 3,
     level: 'Intermediate',
     defaultDurationSeconds: 150,
+    prerequisites: ['Quarter & Half Turns (Prep)', 'Relevés at the Barre'],
   },
   {
     name: 'Chaînés',
@@ -394,6 +420,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 3,
     level: 'Intermediate',
     defaultDurationSeconds: 120,
+    prerequisites: ['Quarter & Half Turns (Prep)', 'Relevés at the Barre'],
   },
   {
     name: 'Quarter & Half Turns (Prep)',
@@ -424,6 +451,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 3,
     level: 'Intermediate',
     defaultDurationSeconds: 90,
+    prerequisites: ['Seated Hamstring Stretch', 'Hip Flexor Stretch'],
   },
   {
     name: 'Front Split (Left Leg)',
@@ -439,6 +467,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 3,
     level: 'Intermediate',
     defaultDurationSeconds: 90,
+    prerequisites: ['Seated Hamstring Stretch', 'Hip Flexor Stretch'],
   },
   {
     name: 'Middle Split',
@@ -454,6 +483,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 3,
     level: 'Intermediate',
     defaultDurationSeconds: 90,
+    prerequisites: ['Butterfly Stretch'],
   },
   {
     name: 'Butterfly Stretch',
@@ -544,6 +574,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 3,
     level: 'Intermediate',
     defaultDurationSeconds: 45,
+    prerequisites: ['Forearm Plank'],
   },
   {
     name: 'Theraband Foot Work',
@@ -589,6 +620,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 2,
     level: 'Beginner',
     defaultDurationSeconds: 90,
+    prerequisites: ['Relevés at the Barre'],
   },
   {
     name: 'Turnout Clams',
@@ -604,6 +636,7 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 2,
     level: 'Beginner',
     defaultDurationSeconds: 60,
+    prerequisites: ['Demi & Grand Pliés'],
   },
   {
     name: 'Passé Balance Hold',
@@ -619,5 +652,6 @@ export const SEED_SKILLS: SeedSkill[] = [
     difficulty: 2,
     level: 'Beginner',
     defaultDurationSeconds: 60,
+    prerequisites: ['Demi & Grand Pliés', 'Relevés at the Barre'],
   },
 ];

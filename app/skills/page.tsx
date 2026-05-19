@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSessionContext } from '@/lib/session';
 import { listCategories, listSkills } from '@/lib/db/skills';
+import { computeLockStates, type LockState } from '@/lib/services/unlock';
 import { CATEGORY_LABELS } from '@/lib/types';
 import type {
   CategoryId,
@@ -79,19 +80,30 @@ function firstParam(value: string | string[] | undefined): string | undefined {
   return value;
 }
 
-function SkillCard({ skill, userLevel }: { skill: Skill; userLevel: Level }) {
+function SkillCard({
+  skill,
+  userLevel,
+  lockState,
+}: {
+  skill: Skill;
+  userLevel: Level;
+  lockState: LockState;
+}) {
   const statusLabel = PROGRESS_STATUS_LABELS[skill.progressStatus];
   const aboveLevel = LEVEL_ORDER[skill.level] > LEVEL_ORDER[userLevel];
+  const locked = lockState.locked;
+  const dim = locked || aboveLevel;
+  const ariaLabel = locked
+    ? `${skill.name} — locked, master ${lockState.missingPrereqNames.join(', ')} first`
+    : aboveLevel
+      ? `${skill.name} — above your current level, peek allowed`
+      : skill.name;
   return (
     <Link
       href={`/skills/${skill.id}`}
-      aria-label={
-        aboveLevel
-          ? `${skill.name} — above your current level, peek allowed`
-          : skill.name
-      }
+      aria-label={ariaLabel}
       className={`block rounded-2xl border border-violet-200 bg-white p-5 shadow-sm transition hover:border-violet-400 ${
-        aboveLevel ? 'opacity-60' : ''
+        dim ? 'opacity-60' : ''
       }`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -125,6 +137,15 @@ function SkillCard({ skill, userLevel }: { skill: Skill; userLevel: Level }) {
           {LEVEL_LABELS[skill.level]}
         </span>
         <DifficultyBadge value={skill.difficulty} />
+        {locked ? (
+          <span
+            className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700"
+            aria-hidden
+          >
+            <span>🔒</span>
+            <span>{lockState.missingPrereqNames.join(' · ')}</span>
+          </span>
+        ) : null}
       </div>
       {skill.trains.length > 0 ? (
         <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Trains">
@@ -150,9 +171,11 @@ function SkillCard({ skill, userLevel }: { skill: Skill; userLevel: Level }) {
 function LevelProgressStrip({
   skills,
   userLevel,
+  lockStates,
 }: {
   skills: Skill[];
   userLevel: Level;
+  lockStates: Map<string, LockState>;
 }) {
   return (
     <section
@@ -169,9 +192,11 @@ function LevelProgressStrip({
       </div>
       <ul className="mt-3 flex flex-col gap-2">
         {ORDERED_LEVELS.map((lvl) => {
-          const total = skills.filter((s) => s.level === lvl).length;
-          const mastered = skills.filter(
-            (s) => s.level === lvl && s.progressStatus === 'mastered',
+          const atLevel = skills.filter((s) => s.level === lvl);
+          const total = atLevel.length;
+          const mastered = atLevel.filter((s) => s.progressStatus === 'mastered').length;
+          const unlocked = atLevel.filter(
+            (s) => lockStates.get(s.id)?.locked !== true,
           ).length;
           const pct = total === 0 ? 0 : Math.round((mastered / total) * 100);
           const isCurrent = lvl === userLevel;
@@ -190,15 +215,16 @@ function LevelProgressStrip({
                 aria-valuenow={pct}
                 aria-valuemin={0}
                 aria-valuemax={100}
-                aria-label={`${LEVEL_LABELS[lvl]}: ${mastered} of ${total} mastered`}
+                aria-label={`${LEVEL_LABELS[lvl]}: ${mastered} of ${total} mastered, ${unlocked} unlocked`}
               >
                 <div
                   className={`h-full ${LEVEL_BAR_COLORS[lvl]} transition-all`}
                   style={{ width: `${pct}%` }}
                 />
               </div>
-              <span className="w-14 shrink-0 text-right tabular-nums text-violet-900/70">
+              <span className="w-24 shrink-0 text-right tabular-nums text-violet-900/70">
                 {mastered}/{total}
+                <span className="ml-1 text-violet-900/50">· 🔓 {unlocked}</span>
               </span>
             </li>
           );
@@ -229,6 +255,7 @@ export default async function SkillsPage(props: SkillsPageProps) {
   const activeStatus: ProgressStatus | null = isProgressStatus(statusParam) ? statusParam : null;
 
   const [categories, skills] = await Promise.all([listCategories(), listSkills(userId)]);
+  const lockStates = computeLockStates(skills);
 
   // Unique "trains" tags across the user's skill catalog, sorted, for the filter dropdown.
   const trainOptions = Array.from(
@@ -266,7 +293,7 @@ export default async function SkillsPage(props: SkillsPageProps) {
         </p>
       </header>
 
-      <LevelProgressStrip skills={skills} userLevel={userLevel} />
+      <LevelProgressStrip skills={skills} userLevel={userLevel} lockStates={lockStates} />
 
       <FilterBar
         q={qRaw}
@@ -320,6 +347,7 @@ export default async function SkillsPage(props: SkillsPageProps) {
             category={c}
             skills={byCategory.get(c.id) ?? []}
             userLevel={userLevel}
+            lockStates={lockStates}
           />
         ))
       )}
@@ -387,10 +415,12 @@ function CategorySection({
   category,
   skills,
   userLevel,
+  lockStates,
 }: {
   category: SkillCategory;
   skills: Skill[];
   userLevel: Level;
+  lockStates: Map<string, LockState>;
 }) {
   const label = CATEGORY_LABELS[category.id] ?? category.name;
   return (
@@ -408,7 +438,12 @@ function CategorySection({
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {skills.map((s) => (
-          <SkillCard key={s.id} skill={s} userLevel={userLevel} />
+          <SkillCard
+            key={s.id}
+            skill={s}
+            userLevel={userLevel}
+            lockState={lockStates.get(s.id) ?? { locked: false }}
+          />
         ))}
       </div>
     </section>
