@@ -185,6 +185,30 @@ export interface SkillAttemptRow {
   photo_size_bytes: number | null;
 }
 
+export interface WeeklySummary {
+  windowStartIso: string;
+  windowEndIso: string;
+  priorWindowStartIso: string;
+  practiceTimeSec: number;
+  practiceTimeSecPrior: number;
+  sessionsCount: number;
+  sessionsCountPrior: number;
+  skillsPracticedCount: number;
+  mostPracticed: { skillId: string; skillName: string; totalSec: number } | null;
+  milestonesCount: number;
+  masteredSkills: { id: string; name: string; changedAt: string }[];
+  improvedSkills: {
+    id: string;
+    name: string;
+    priorAvg: number;
+    currentAvg: number;
+    priorAttempts: number;
+    currentAttempts: number;
+  }[];
+  hasAnyActivity: boolean;
+  hasPriorBaseline: boolean;
+}
+
 export const skillFromRow = (r: SkillRow): Skill => ({
   id: r.id,
   userId: r.user_id,

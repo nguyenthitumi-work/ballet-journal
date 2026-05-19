@@ -13,6 +13,10 @@ import {
 } from '@/lib/services/suggestion';
 import { pickNextSkill, type NextSkillReason } from '@/lib/services/nextSkill';
 import { computeLockStates } from '@/lib/services/unlock';
+import {
+  getWeeklySummary,
+  formatDurationCompact,
+} from '@/lib/services/weeklySummary';
 import { CATEGORY_LABELS } from '@/lib/types';
 import type { Skill } from '@/lib/types';
 
@@ -93,10 +97,11 @@ export default async function HomePage() {
   const now = new Date();
   const dayOfWeek = localDayOfWeek(now, LOCAL_TZ);
   const dayTemplate = WEEKLY_TEMPLATE[dayOfWeek];
-  const [skills, todaysCount, unlockedSceneIds] = await Promise.all([
+  const [skills, todaysCount, unlockedSceneIds, weekly] = await Promise.all([
     listSkills(userId),
     countDistinctSkillsToday(userId, LOCAL_TZ),
     listUnlockedSceneIds(userId),
+    getWeeklySummary(userId, now),
   ]);
   const journey = SEED_REWARD_JOURNEYS.find((j) => j.id === PRIMARY_JOURNEY_ID);
   const journeyScenes = SEED_REWARD_SCENES
@@ -146,6 +151,42 @@ export default async function HomePage() {
         </p>
         <p className="mt-2 text-sm text-violet-900/70">{streakMessage(profile.streak)}</p>
       </div>
+
+      <Link
+        href="/summary"
+        className="rounded-2xl border border-violet-200 bg-white p-5 shadow-sm transition hover:border-violet-400"
+      >
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="text-sm font-medium text-violet-900/70">This week</p>
+          <p className="text-xs text-violet-900/60">View summary →</p>
+        </div>
+        {weekly.hasAnyActivity ? (
+          <div className="mt-2 grid grid-cols-3 gap-3">
+            <div>
+              <p className="text-xs text-violet-900/60">Practice time</p>
+              <p className="text-xl font-semibold tracking-tight">
+                {formatDurationCompact(weekly.practiceTimeSec)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-violet-900/60">Sessions</p>
+              <p className="text-xl font-semibold tracking-tight">
+                {weekly.sessionsCount}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-violet-900/60">Skills improved</p>
+              <p className="text-xl font-semibold tracking-tight">
+                {weekly.improvedSkills.length}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <p className="mt-2 text-sm text-violet-900/70">
+            No practice yet this week — finish a session to start your summary.
+          </p>
+        )}
+      </Link>
 
       <div className="rounded-2xl border border-violet-200 bg-white p-5 shadow-sm">
         <div className="flex items-baseline justify-between">
