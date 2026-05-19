@@ -80,7 +80,7 @@ export default async function HomePage() {
   if (!onboarded) {
     return (
       <section className="flex flex-col items-center gap-6 py-12 text-center">
-        <h1 className="text-3xl font-semibold tracking-tight">Welcome to Ballet Journal</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Welcome to Plié</h1>
         <p className="max-w-md text-violet-900/80">
           A tiny notebook for tracking your ballet practice. Let&apos;s set up your profile.
         </p>
@@ -341,32 +341,6 @@ export default async function HomePage() {
         ) : null}
       </Link>
 
-      <div className="grid grid-cols-2 gap-3 text-center text-sm sm:grid-cols-4">
-        <Link
-          href="/skills"
-          className="rounded-xl border border-violet-200 bg-white px-3 py-3 transition hover:border-violet-400"
-        >
-          Skills
-        </Link>
-        <Link
-          href="/practice"
-          className="rounded-xl border border-violet-200 bg-white px-3 py-3 transition hover:border-violet-400"
-        >
-          Practice plans
-        </Link>
-        <Link
-          href="/badges"
-          className="rounded-xl border border-violet-200 bg-white px-3 py-3 transition hover:border-violet-400"
-        >
-          Badges
-        </Link>
-        <Link
-          href="/history"
-          className="rounded-xl border border-violet-200 bg-white px-3 py-3 transition hover:border-violet-400"
-        >
-          History
-        </Link>
-      </div>
     </section>
   );
 }

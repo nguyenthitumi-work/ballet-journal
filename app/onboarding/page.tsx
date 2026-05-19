@@ -17,7 +17,7 @@ export default async function OnboardingPage() {
   return (
     <section className="flex flex-col gap-6 py-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Welcome to Ballet Journal!</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Welcome to Plié!</h1>
         <p className="text-violet-900/80">
           A few quick questions and we&apos;ll get your journal ready.
         </p>
