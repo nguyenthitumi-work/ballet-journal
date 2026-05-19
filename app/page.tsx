@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getSessionContext } from '@/lib/session';
+import { countDistinctSkillsToday } from '@/lib/db/sessions';
 import { listSkills } from '@/lib/db/skills';
 import {
   WEEKLY_TEMPLATE,
@@ -87,8 +88,13 @@ export default async function HomePage() {
   const now = new Date();
   const dayOfWeek = localDayOfWeek(now, LOCAL_TZ);
   const dayTemplate = WEEKLY_TEMPLATE[dayOfWeek];
-  const skills = await listSkills(userId);
+  const [skills, todaysCount] = await Promise.all([
+    listSkills(userId),
+    countDistinctSkillsToday(userId, LOCAL_TZ),
+  ]);
   const lockStates = computeLockStates(skills);
+  const goal = profile.dailySkillGoal;
+  const goalMet = todaysCount >= goal;
   const suggestionInput = skills.map((s) => ({
     id: s.id,
     name: s.name,
@@ -128,6 +134,38 @@ export default async function HomePage() {
           </span>
         </p>
         <p className="mt-2 text-sm text-violet-900/70">{streakMessage(profile.streak)}</p>
+      </div>
+
+      <div className="rounded-2xl border border-violet-200 bg-white p-5 shadow-sm">
+        <div className="flex items-baseline justify-between">
+          <p className="text-sm font-medium text-violet-900/70">Today&apos;s goal</p>
+          <p className="text-xs text-violet-900/60">
+            {Math.min(todaysCount, goal)} of {goal} skills
+          </p>
+        </div>
+        <ul
+          className="mt-3 flex flex-wrap gap-2"
+          aria-label={`${todaysCount} of ${goal} skills practiced today`}
+        >
+          {Array.from({ length: goal }, (_, i) => (
+            <li
+              key={i}
+              aria-hidden
+              className={`h-4 w-4 rounded-full ${
+                i < todaysCount ? 'bg-violet-600' : 'border-2 border-violet-300'
+              }`}
+            />
+          ))}
+        </ul>
+        <p className="mt-3 text-sm text-violet-900/70">
+          {goalMet
+            ? todaysCount > goal
+              ? `Goal met — ${todaysCount} skills today. ⭐`
+              : 'Goal met for today. ⭐'
+            : `Practice ${goal - todaysCount} more ${
+                goal - todaysCount === 1 ? 'skill' : 'skills'
+              } to hit today’s goal.`}
+        </p>
       </div>
 
       {nextSkill ? (

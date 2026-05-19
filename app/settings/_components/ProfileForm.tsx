@@ -7,6 +7,8 @@ import { computeAge, isValidDateOfBirth, MIN_AGE, MAX_AGE } from '@/lib/age';
 import { updateProfileAction } from '../actions';
 
 const LEVELS: Level[] = ['Beginner', 'Intermediate', 'Advanced'];
+const MIN_DAILY_GOAL = 1;
+const MAX_DAILY_GOAL = 10;
 
 const LEVEL_HINTS: Record<Level, string> = {
   Beginner: 'Just starting out',
@@ -25,6 +27,7 @@ export default function ProfileForm({ initialProfile }: Props) {
   const [name, setName] = useState<string>(initialProfile.name ?? '');
   const [dateOfBirth, setDateOfBirth] = useState<string>(initialProfile.dateOfBirth ?? '');
   const [level, setLevel] = useState<Level>(initialProfile.level);
+  const [dailySkillGoal, setDailySkillGoal] = useState<number>(initialProfile.dailySkillGoal);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -38,6 +41,13 @@ export default function ProfileForm({ initialProfile }: Props) {
       return `Birthday must be a real past date and put your age between ${MIN_AGE} and ${MAX_AGE}.`;
     }
     if (!LEVELS.includes(level)) return 'Please pick a level.';
+    if (
+      !Number.isInteger(dailySkillGoal) ||
+      dailySkillGoal < MIN_DAILY_GOAL ||
+      dailySkillGoal > MAX_DAILY_GOAL
+    ) {
+      return `Daily goal must be between ${MIN_DAILY_GOAL} and ${MAX_DAILY_GOAL} skills.`;
+    }
     return null;
   };
 
@@ -56,6 +66,7 @@ export default function ProfileForm({ initialProfile }: Props) {
     formData.set('name', name.trim());
     formData.set('dateOfBirth', dateOfBirth);
     formData.set('level', level);
+    formData.set('dailySkillGoal', String(dailySkillGoal));
 
     startTransition(async () => {
       try {
@@ -149,6 +160,32 @@ export default function ProfileForm({ initialProfile }: Props) {
           </label>
         ))}
       </fieldset>
+
+      <div>
+        <label htmlFor="dailySkillGoal" className="text-sm font-medium text-violet-900">
+          Daily goal
+        </label>
+        <input
+          id="dailySkillGoal"
+          name="dailySkillGoal"
+          type="number"
+          min={MIN_DAILY_GOAL}
+          max={MAX_DAILY_GOAL}
+          step={1}
+          value={dailySkillGoal}
+          onChange={(e) => {
+            const n = Number.parseInt(e.target.value, 10);
+            setDailySkillGoal(Number.isFinite(n) ? n : 0);
+            setSaved(false);
+          }}
+          className={`${inputClass} mt-1`}
+          disabled={isPending}
+          required
+        />
+        <p className="mt-1 text-sm text-violet-900/70">
+          How many distinct skills to practice each day ({MIN_DAILY_GOAL}–{MAX_DAILY_GOAL}).
+        </p>
+      </div>
 
       {error ? (
         <p

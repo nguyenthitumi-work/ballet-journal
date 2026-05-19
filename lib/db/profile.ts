@@ -17,13 +17,14 @@ export async function getProfile(userId: string): Promise<UserProfile | null> {
 
 export async function updateProfile(
   userId: string,
-  patch: Partial<Pick<UserProfile, 'name' | 'dateOfBirth' | 'level'>>,
+  patch: Partial<Pick<UserProfile, 'name' | 'dateOfBirth' | 'level' | 'dailySkillGoal'>>,
 ): Promise<UserProfile> {
   const supabase = await getServerSupabase();
   const row: Record<string, unknown> = {};
   if (patch.name !== undefined) row.name = patch.name;
   if (patch.dateOfBirth !== undefined) row.date_of_birth = patch.dateOfBirth;
   if (patch.level !== undefined) row.level = patch.level;
+  if (patch.dailySkillGoal !== undefined) row.daily_skill_goal = patch.dailySkillGoal;
 
   const { data, error } = await supabase
     .from('user_profile')

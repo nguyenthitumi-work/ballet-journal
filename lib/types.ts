@@ -44,6 +44,7 @@ export interface UserProfile {
   level: Level;
   streak: number;
   lastPracticeDate: string | null;
+  dailySkillGoal: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -140,6 +141,7 @@ export interface UserProfileRow {
   level: Level;
   streak: number;
   last_practice_date: string | null;
+  daily_skill_goal: number;
   created_at: string;
   updated_at: string;
 }
@@ -216,6 +218,7 @@ export const profileFromRow = (r: UserProfileRow): UserProfile => ({
   level: r.level,
   streak: r.streak,
   lastPracticeDate: r.last_practice_date,
+  dailySkillGoal: r.daily_skill_goal,
   createdAt: r.created_at,
   updatedAt: r.updated_at,
 });

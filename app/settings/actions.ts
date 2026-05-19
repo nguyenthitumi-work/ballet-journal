@@ -19,12 +19,16 @@ function isLevel(value: string): value is Level {
   return (VALID_LEVELS as readonly string[]).includes(value);
 }
 
+const MIN_DAILY_GOAL = 1;
+const MAX_DAILY_GOAL = 10;
+
 export async function updateProfileAction(
   formData: FormData,
 ): Promise<{ ok: true }> {
   const rawName = formData.get('name');
   const rawDob = formData.get('dateOfBirth');
   const rawLevel = formData.get('level');
+  const rawGoal = formData.get('dailySkillGoal');
 
   const name = typeof rawName === 'string' ? rawName.trim() : '';
   if (name.length === 0) {
@@ -46,8 +50,20 @@ export async function updateProfileAction(
     throw new Error('Please pick a level.');
   }
 
+  const goalNum = typeof rawGoal === 'string' ? Number.parseInt(rawGoal, 10) : NaN;
+  if (!Number.isFinite(goalNum) || goalNum < MIN_DAILY_GOAL || goalNum > MAX_DAILY_GOAL) {
+    throw new Error(
+      `Daily goal must be between ${MIN_DAILY_GOAL} and ${MAX_DAILY_GOAL} skills.`,
+    );
+  }
+
   const { userId } = await getSessionContext();
-  await updateProfile(userId, { name, dateOfBirth, level: levelStr });
+  await updateProfile(userId, {
+    name,
+    dateOfBirth,
+    level: levelStr,
+    dailySkillGoal: goalNum,
+  });
 
   revalidatePath('/settings');
   revalidatePath('/');

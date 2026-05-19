@@ -22,6 +22,7 @@ export async function ensureUserBootstrapped(userId: string): Promise<void> {
         level: 'Beginner',
         streak: 0,
         last_practice_date: null,
+        daily_skill_goal: 3,
       },
       { onConflict: 'user_id', ignoreDuplicates: true },
     )

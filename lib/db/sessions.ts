@@ -1,5 +1,6 @@
 import 'server-only';
 import { getServerSupabase } from '@/lib/supabase/server';
+import { formatLocalDate } from '@/lib/services/streak';
 import { sessionFromRow, attemptFromRow } from '@/lib/types';
 import type {
   PracticeSession,
@@ -292,4 +293,35 @@ export async function clearAllUserVideoPaths(userId: string): Promise<void> {
     .eq('user_id', userId)
     .not('video_path', 'is', null);
   if (error) throw new Error(error.message);
+}
+
+// Number of distinct skills the user has attempted today (in their TZ). Used
+// for the daily practice goal on the home page. Pads the SQL filter to a
+// 48-hour UTC window so we don't have to compute TZ-aware UTC bounds; the
+// in-memory filter then keeps only rows whose local date matches today.
+export async function countDistinctSkillsToday(
+  userId: string,
+  tz: string,
+): Promise<number> {
+  const DAY_MS = 86_400_000;
+  const now = new Date();
+  const todayLocal = formatLocalDate(now, tz);
+  const startIso = new Date(now.getTime() - DAY_MS).toISOString();
+  const endIso = new Date(now.getTime() + DAY_MS).toISOString();
+  const supabase = await getServerSupabase();
+  const { data, error } = await supabase
+    .from('skill_attempt')
+    .select('skill_id, attempted_at')
+    .eq('user_id', userId)
+    .gte('attempted_at', startIso)
+    .lt('attempted_at', endIso);
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as Array<{ skill_id: string; attempted_at: string }>;
+  const skillIds = new Set<string>();
+  for (const r of rows) {
+    if (formatLocalDate(new Date(r.attempted_at), tz) === todayLocal) {
+      skillIds.add(r.skill_id);
+    }
+  }
+  return skillIds.size;
 }
