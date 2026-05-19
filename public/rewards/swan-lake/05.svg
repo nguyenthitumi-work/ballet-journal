@@ -1,20 +1,68 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320" width="240" height="320" role="img" aria-label="Swan Lake scene 05">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320" width="240" height="320" role="img" aria-label="Swan Lake scene 05 — Off to the lake by moonlight">
   <defs>
-    <linearGradient id="bg-05" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#fff7ed"/>
-      <stop offset="100%" stop-color="#fde68a"/>
-    </linearGradient>
+    <linearGradient id="card-bg-05" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#1e293b"/>
+    <stop offset="100%" stop-color="#0f172a"/>
+  </linearGradient>
+    <linearGradient id="tutu-05" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#e0e7ff"/>
+    <stop offset="100%" stop-color="#a5b4fc"/>
+  </linearGradient>
+    <radialGradient id="moon-05" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#fef3c7"/><stop offset="100%" stop-color="#fde68a"/>
+    </radialGradient>
   </defs>
-  <rect x="6" y="6" width="228" height="308" rx="20" fill="url(#bg-05)" stroke="#f59e0b" stroke-width="2"/>
+  <rect x="6" y="6" width="228" height="308" rx="20" fill="url(#card-bg-05)" stroke="#f59e0b" stroke-width="2"/>
   <text x="120" y="38" text-anchor="middle" font-family="Georgia, serif" font-size="11" letter-spacing="3" fill="#92400e">SWAN LAKE</text>
-  <g transform="translate(120 165)" fill="#92400e">
-    <ellipse cx="22" cy="22" rx="58" ry="26"/>
-    <path d="M72 12 L96 -2 L80 28 Z"/>
-    <path d="M-22 12 C-52 -8 -52 -60 -20 -70 C-4 -76 8 -64 2 -54 C-20 -44 -26 -22 -14 -6 Z"/>
-    <circle cx="-14" cy="-66" r="8"/>
-    <path d="M-22 -66 L-34 -62 L-22 -58 Z" fill="#fb923c"/>
-    <circle cx="-11" cy="-68" r="1.6" fill="#0f172a"/>
+  <clipPath id="stage-05"><rect x="22" y="50" width="196" height="200" rx="6"/></clipPath>
+  <g clip-path="url(#stage-05)">
+    <rect x="22" y="50" width="196" height="200" fill="#1e293b"/>
+    <circle cx="180" cy="90" r="18" fill="url(#moon-05)"/>
+    <g fill="#fef3c7" opacity="0.7">
+      <circle cx="60" cy="80" r="0.6"/><circle cx="90" cy="65" r="0.5"/><circle cx="110" cy="90" r="0.6"/>
+      <circle cx="140" cy="60" r="0.5"/><circle cx="40" cy="110" r="0.5"/><circle cx="200" cy="130" r="0.6"/>
+    </g>
+    <rect x="22" y="200" width="196" height="50" fill="#0f172a"/>
+    <g stroke="#475569" stroke-width="0.5" opacity="0.5">
+      <path d="M22 215 L218 215"/>
+    </g>
+    <g fill="#1e3a2e" opacity="0.8">
+      <path d="M30 200 C30 180 36 160 30 140 L40 140 C36 160 42 180 42 200 Z"/>
+      <path d="M195 200 C195 180 201 160 195 140 L205 140 C201 160 207 180 207 200 Z"/>
+      <ellipse cx="36" cy="155" rx="14" ry="20"/>
+      <ellipse cx="201" cy="155" rx="14" ry="20"/>
+    </g>
+    <g transform="translate(120 168)">
+    <ellipse cx="0" cy="68" rx="14" ry="2.5" fill="#000" fill-opacity="0.3"/>
+    <path d="M-5 24 C-6 40 -6 58 -6 66 L1 66 L1 24 Z" fill="#f9e3c7"/>
+        <path d="M1 24 L8 26 L20 52 L26 56 L22 60 L14 56 L4 36 Z" fill="#f9e3c7"/>
+        <path d="M-10 66 C-10 70 -5 70 -3 70 L1 70 L1 64 L-7 64 Z" fill="#f9a8c1"/>
+        <path d="M20 52 L30 58 L26 60 L18 55 Z" fill="#f9a8c1"/>
+    <path d="M-22 22 C-26 30 -24 38 -16 40 L16 40 C24 38 26 30 22 22 C18 18 -18 18 -22 22 Z" fill="url(#tutu-05)" stroke="#c9924d" stroke-width="0.4"/>
+    <path d="M-20 26 C-24 32 -22 38 -16 40 L16 40 C22 38 24 32 20 26" fill="#fff5e1" opacity="0.4"/>
+    <path d="M-9 -2 C-10 8 -10 16 -8 22 L8 22 C10 16 10 8 9 -2 C7 -4 -7 -4 -9 -2 Z" fill="#e0e7ff" stroke="#c9924d" stroke-width="0.4"/>
+    <path d="M-7 -2 C-3 -3 3 -3 7 -2" stroke="#7eb6d9" stroke-width="0.8" fill="none"/>
+    <path d="M-9 4 C-14 12 -12 22 -4 26" stroke="#f9e3c7" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M9 4 C20 6 32 6 42 4" stroke="#f9e3c7" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <circle cx="-3" cy="26" r="1.6" fill="#f9e3c7"/>
+        <circle cx="42" cy="4" r="1.8" fill="#f9e3c7"/>
+    <g transform="rotate(-8)">
+    <ellipse cx="0" cy="-16" rx="8" ry="9" fill="#f9e3c7"/>
+    <path d="M-8 -16 C-8 -23 -4 -27 0 -27 C4 -27 8 -23 8 -16 C8 -14 6 -12 4 -12 L-4 -12 C-6 -12 -8 -14 -8 -16 Z" fill="#6b3410"/>
+    <path d="M0 -27 L0 -16" stroke="#3d1d08" stroke-width="0.5"/>
+    <ellipse cx="0" cy="-9" rx="5" ry="3.5" fill="#6b3410" stroke="#3d1d08" stroke-width="0.3"/>
+    <path d="M-5 -10 L-7 -7 L-2 -8 Z M5 -10 L7 -7 L2 -8 Z" fill="#bfdbfe" stroke="#c9924d" stroke-width="0.3"/>
+    <path d="M-3.5 -16 L-2 -16 M2 -16 L3.5 -16" stroke="#3d1d08" stroke-width="0.7" stroke-linecap="round"/>
+    <path d="M-3 -15.5 L-2.5 -15 M3 -15.5 L2.5 -15" stroke="#3d1d08" stroke-width="0.4"/>
+    <path d="M0 -14 L-0.5 -12.5" stroke="#c9924d" stroke-width="0.4" fill="none"/>
+    <path d="M-1.5 -10.4 L1.5 -10.4" stroke="#a44a4a" stroke-width="0.5"/>
+    <circle cx="-4" cy="-12.5" r="1.2" fill="#f4a8a8" opacity="0.6"/>
+    <circle cx="4" cy="-12.5" r="1.2" fill="#f4a8a8" opacity="0.6"/>
   </g>
-  <text x="120" y="268" text-anchor="middle" font-family="Georgia, serif" font-size="46" font-weight="700" fill="#92400e">05</text>
-  <text x="120" y="290" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" letter-spacing="2" fill="#92400e" opacity="0.6">SCENE 05 OF 24</text>
+  <path d="M-2.5 -4 L-2.5 -8 L2.5 -8 L2.5 -4 Z" fill="#f9e3c7"/>
+  </g>
+  </g>
+  <rect x="22" y="50" width="196" height="200" rx="6" fill="none" stroke="#92400e" stroke-width="0.6" opacity="0.6"/>
+  <text x="120" y="278" text-anchor="middle" font-family="Georgia, serif" font-size="13" font-style="italic" fill="#92400e">Off to the lake by moonlight</text>
+  <text x="120" y="298" text-anchor="middle" font-family="system-ui, sans-serif" font-size="8" letter-spacing="2" fill="#92400e" opacity="0.6">SCENE 05 OF 24</text>
 </svg>

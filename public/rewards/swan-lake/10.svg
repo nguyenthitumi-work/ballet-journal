@@ -1,20 +1,64 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320" width="240" height="320" role="img" aria-label="Swan Lake scene 10">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320" width="240" height="320" role="img" aria-label="Swan Lake scene 10 — A vow under the stars">
   <defs>
-    <linearGradient id="bg-10" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#eff6ff"/>
-      <stop offset="100%" stop-color="#bfdbfe"/>
-    </linearGradient>
+    <linearGradient id="card-bg-10" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#1e1b4b"/>
+    <stop offset="100%" stop-color="#312e81"/>
+  </linearGradient>
+    <linearGradient id="tutu-10" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#f8fafc"/>
+    <stop offset="100%" stop-color="#cbd5e1"/>
+  </linearGradient>
+    <radialGradient id="moon-10" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#fef3c7"/><stop offset="100%" stop-color="#fde68a"/>
+    </radialGradient>
   </defs>
-  <rect x="6" y="6" width="228" height="308" rx="20" fill="url(#bg-10)" stroke="#60a5fa" stroke-width="2"/>
-  <text x="120" y="38" text-anchor="middle" font-family="Georgia, serif" font-size="11" letter-spacing="3" fill="#1e3a8a">SWAN LAKE</text>
-  <g transform="translate(120 165)" fill="#1e3a8a">
-    <ellipse cx="22" cy="22" rx="58" ry="26"/>
-    <path d="M72 12 L96 -2 L80 28 Z"/>
-    <path d="M-22 12 C-52 -8 -52 -60 -20 -70 C-4 -76 8 -64 2 -54 C-20 -44 -26 -22 -14 -6 Z"/>
-    <circle cx="-14" cy="-66" r="8"/>
-    <path d="M-22 -66 L-34 -62 L-22 -58 Z" fill="#f59e0b"/>
-    <circle cx="-11" cy="-68" r="1.6" fill="#0f172a"/>
+  <rect x="6" y="6" width="228" height="308" rx="20" fill="url(#card-bg-10)" stroke="#f59e0b" stroke-width="2"/>
+  <text x="120" y="38" text-anchor="middle" font-family="Georgia, serif" font-size="11" letter-spacing="3" fill="#92400e">SWAN LAKE</text>
+  <clipPath id="stage-10"><rect x="22" y="50" width="196" height="200" rx="6"/></clipPath>
+  <g clip-path="url(#stage-10)">
+    <rect x="22" y="50" width="196" height="200" fill="#1e1b4b"/>
+    <circle cx="50" cy="80" r="12" fill="url(#moon-10)"/>
+    <g fill="#fef3c7">
+      <path d="M120 70 L121 72 L123 72.5 L121 73 L120 75 L119 73 L117 72.5 L119 72 Z"/>
+      <path d="M170 90 L171 92 L173 92.5 L171 93 L170 95 L169 93 L167 92.5 L169 92 Z"/>
+      <path d="M90 95 L91 97 L93 97.5 L91 98 L90 100 L89 98 L87 97.5 L89 97 Z"/>
+      <path d="M200 130 L201 132 L203 132.5 L201 133 L200 135 L199 133 L197 132.5 L199 132 Z"/>
+      <circle cx="60" cy="125" r="0.6"/><circle cx="100" cy="60" r="0.5"/><circle cx="150" cy="65" r="0.5"/>
+      <circle cx="180" cy="120" r="0.6"/><circle cx="30" cy="130" r="0.5"/>
+    </g>
+    <path d="M22 220 Q120 215 218 220 L218 250 L22 250 Z" fill="#312e81" opacity="0.8"/>
+    <g transform="translate(120 170)">
+    <ellipse cx="0" cy="68" rx="14" ry="2.5" fill="#000" fill-opacity="0.3"/>
+    <path d="M-5 24 C-6 40 -6 58 -6 66 L1 66 L1 24 Z" fill="#f9e3c7"/>
+        <path d="M1 24 L8 26 L20 52 L26 56 L22 60 L14 56 L4 36 Z" fill="#f9e3c7"/>
+        <path d="M-10 66 C-10 70 -5 70 -3 70 L1 70 L1 64 L-7 64 Z" fill="#f9a8c1"/>
+        <path d="M20 52 L30 58 L26 60 L18 55 Z" fill="#f9a8c1"/>
+    <path d="M-22 22 C-26 30 -24 38 -16 40 L16 40 C24 38 26 30 22 22 C18 18 -18 18 -22 22 Z" fill="url(#tutu-10)" stroke="#c9924d" stroke-width="0.4"/>
+    <path d="M-20 26 C-24 32 -22 38 -16 40 L16 40 C22 38 24 32 20 26" fill="#fff5e1" opacity="0.4"/>
+    <path d="M-9 -2 C-10 8 -10 16 -8 22 L8 22 C10 16 10 8 9 -2 C7 -4 -7 -4 -9 -2 Z" fill="#f1f5f9" stroke="#c9924d" stroke-width="0.4"/>
+    <path d="M-7 -2 C-3 -3 3 -3 7 -2" stroke="#bfdbfe" stroke-width="0.8" fill="none"/>
+    <path d="M-9 4 C-18 10 -16 18 -6 18" stroke="#f9e3c7" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M9 4 C18 10 16 18 6 18" stroke="#f9e3c7" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <circle cx="-4" cy="18" r="1.6" fill="#f9e3c7"/>
+        <circle cx="4" cy="18" r="1.6" fill="#f9e3c7"/>
+    <g transform="rotate(-12)">
+    <ellipse cx="0" cy="-16" rx="8" ry="9" fill="#f9e3c7"/>
+    <path d="M-8 -16 C-8 -23 -4 -27 0 -27 C4 -27 8 -23 8 -16 C8 -14 6 -12 4 -12 L-4 -12 C-6 -12 -8 -14 -8 -16 Z" fill="#6b3410"/>
+    <path d="M0 -27 L0 -16" stroke="#3d1d08" stroke-width="0.5"/>
+    <ellipse cx="0" cy="-9" rx="5" ry="3.5" fill="#6b3410" stroke="#3d1d08" stroke-width="0.3"/>
+    <path d="M-5 -10 L-7 -7 L-2 -8 Z M5 -10 L7 -7 L2 -8 Z" fill="#e0e7ff" stroke="#c9924d" stroke-width="0.3"/>
+    <path d="M-3.5 -16 L-2 -16 M2 -16 L3.5 -16" stroke="#3d1d08" stroke-width="0.7" stroke-linecap="round"/>
+    <path d="M-3 -15.5 L-2.5 -15 M3 -15.5 L2.5 -15" stroke="#3d1d08" stroke-width="0.4"/>
+    <path d="M0 -14 L-0.5 -12.5" stroke="#c9924d" stroke-width="0.4" fill="none"/>
+    <path d="M-1.5 -10.5 Q0 -10 1.5 -10.5" stroke="#a44a4a" stroke-width="0.5" fill="none"/>
+    <circle cx="-4" cy="-12.5" r="1.2" fill="#f4a8a8" opacity="0.6"/>
+    <circle cx="4" cy="-12.5" r="1.2" fill="#f4a8a8" opacity="0.6"/>
   </g>
-  <text x="120" y="268" text-anchor="middle" font-family="Georgia, serif" font-size="46" font-weight="700" fill="#1e3a8a">10</text>
-  <text x="120" y="290" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" letter-spacing="2" fill="#1e3a8a" opacity="0.6">SCENE 10 OF 24</text>
+  <path d="M-2.5 -4 L-2.5 -8 L2.5 -8 L2.5 -4 Z" fill="#f9e3c7"/>
+  </g>
+    <g fill="#fef3c7" opacity="0.5"><circle cx="120" cy="135" r="14"/></g>
+  </g>
+  <rect x="22" y="50" width="196" height="200" rx="6" fill="none" stroke="#92400e" stroke-width="0.6" opacity="0.6"/>
+  <text x="120" y="278" text-anchor="middle" font-family="Georgia, serif" font-size="13" font-style="italic" fill="#92400e">A vow under the stars</text>
+  <text x="120" y="298" text-anchor="middle" font-family="system-ui, sans-serif" font-size="8" letter-spacing="2" fill="#92400e" opacity="0.6">SCENE 10 OF 24</text>
 </svg>
