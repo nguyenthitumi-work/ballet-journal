@@ -12,6 +12,7 @@ const MORE_ITEMS = [
   { href: '/milestones', label: 'Milestones' },
   { href: '/badges', label: 'Badges' },
   { href: '/summary', label: 'Summary' },
+  { href: '/guide', label: 'Guide' },
   { href: '/settings', label: 'Settings' },
 ] as const;
 
