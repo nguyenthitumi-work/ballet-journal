@@ -12,6 +12,7 @@ import {
   deleteVideoBlob,
   uploadVideoBlob,
 } from '@/lib/storage/videos';
+import { parseYouTubeId, toEmbedUrl, youtubeSearchUrl } from '@/lib/youtube';
 import {
   attachPhotoToAttempt,
   attachVideoToAttempt,
@@ -28,6 +29,8 @@ type CurrentSkill = {
   description: string | null;
   techniqueTips: string[];
   defaultDurationSeconds: number;
+  referenceUrl: string | null;
+  referenceUrlSuggested: string | null;
 };
 
 interface Props {
@@ -293,6 +296,14 @@ export default function PracticeLoop({
     });
   };
 
+  const referenceVideoUrl =
+    currentSkill.referenceUrl ?? currentSkill.referenceUrlSuggested;
+  const referenceVideoId = referenceVideoUrl
+    ? parseYouTubeId(referenceVideoUrl)
+    : null;
+  const isSuggestedOnly =
+    referenceVideoId !== null && currentSkill.referenceUrl === null;
+
   const saveLabel = (() => {
     if (!isPending) return 'Save & next';
     if (recordedClip && uploadStatus === 'uploading') return 'Uploading video…';
@@ -320,6 +331,48 @@ export default function PracticeLoop({
         {currentSkill.description ? (
           <p className="text-violet-900/80">{currentSkill.description}</p>
         ) : null}
+
+        <div>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-medium text-violet-900/70">
+              Reference video
+            </h2>
+            <a
+              href={youtubeSearchUrl(currentSkill.name)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-medium text-violet-700 underline-offset-2 hover:underline"
+            >
+              Search YouTube ↗
+            </a>
+          </div>
+          {referenceVideoId ? (
+            <>
+              <div className="mt-3 aspect-video overflow-hidden rounded-xl bg-black">
+                <iframe
+                  src={toEmbedUrl(referenceVideoId)}
+                  title={`${currentSkill.name} reference video`}
+                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  sandbox="allow-scripts allow-same-origin allow-presentation"
+                  className="h-full w-full"
+                />
+              </div>
+              {isSuggestedOnly ? (
+                <p className="mt-2 text-xs text-violet-900/60">
+                  Suggested video — a grown-up can confirm or change it on the
+                  skill page.
+                </p>
+              ) : null}
+            </>
+          ) : (
+            <p className="mt-3 text-sm text-violet-900/60">
+              No reference video set yet. A grown-up can add a YouTube link from
+              the skill page.
+            </p>
+          )}
+        </div>
 
         {currentSkill.techniqueTips.length > 0 ? (
           <div>

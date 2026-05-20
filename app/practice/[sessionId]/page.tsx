@@ -144,6 +144,8 @@ function serializeSkill(skill: Skill): {
   description: string | null;
   techniqueTips: string[];
   defaultDurationSeconds: number;
+  referenceUrl: string | null;
+  referenceUrlSuggested: string | null;
 } {
   return {
     id: skill.id,
@@ -153,5 +155,7 @@ function serializeSkill(skill: Skill): {
     description: skill.description,
     techniqueTips: skill.techniqueTips,
     defaultDurationSeconds: skill.defaultDurationSeconds,
+    referenceUrl: skill.referenceUrl,
+    referenceUrlSuggested: skill.referenceUrlSuggested,
   };
 }
