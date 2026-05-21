@@ -9,6 +9,7 @@ import {
   getAttemptPhotoPath,
   getAttemptVideoPath,
 } from '@/lib/db/sessions';
+import { createNote } from '@/lib/db/notes';
 
 const VIDEO_BUCKET = 'practice-videos';
 const PHOTO_BUCKET = 'practice-photos';
@@ -59,4 +60,19 @@ export async function deletePhotoForAttempt(args: {
 
   revalidatePath('/history');
   revalidatePath('/settings');
+}
+
+export async function addPracticeNoteAction(opts: {
+  sessionId?: string;
+  attemptId?: string;
+  body: string;
+}): Promise<void> {
+  const { userId } = await getSessionContext();
+  await createNote({
+    authorUserId: userId,
+    sessionId: opts.sessionId,
+    attemptId: opts.attemptId,
+    body: opts.body,
+  });
+  revalidatePath('/history');
 }

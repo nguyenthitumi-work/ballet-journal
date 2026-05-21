@@ -8,8 +8,15 @@ import {
   listSessions,
 } from '@/lib/db/sessions';
 import { listPlans } from '@/lib/db/plans';
+import { getFamilies, getFamilyMembers } from '@/lib/db/families';
+import { getClasses, getClassMembers } from '@/lib/db/classes';
+import { getServerSupabase } from '@/lib/supabase/server';
+import type { FamilyMember, ClassMember } from '@/lib/types';
 import ProfileForm from './_components/ProfileForm';
 import VideoStorageStats from './_components/VideoStorageStats';
+import FamilyPanel from './_components/FamilyPanel';
+import ClassPanel from './_components/ClassPanel';
+import { RoleBadges } from './_components/RoleBadges';
 
 const sectionHeading = 'text-lg font-semibold text-violet-900 mb-3';
 const card = 'rounded-2xl border border-violet-200 bg-white p-5 shadow-sm';
@@ -35,23 +42,78 @@ export default async function SettingsPage() {
     redirect('/onboarding');
   }
 
-  const [skills, focusSkills, plans, sessions, videoStats] = await Promise.all([
+  const [skills, focusSkills, plans, sessions, videoStats, families, classes] = await Promise.all([
     listSkills(userId),
     listFocusSkills(userId),
     listPlans(userId),
     listSessions(userId),
     getUserVideoStats(userId),
+    getFamilies(userId),
+    getClasses(userId),
   ]);
+
+  const familyMembersMap: Record<string, any[]> = {};
+  for (const family of families) {
+    familyMembersMap[family.id] = await getFamilyMembers(family.id);
+  }
+
+  const classMembersMap: Record<string, any[]> = {};
+  for (const cls of classes) {
+    classMembersMap[cls.id] = await getClassMembers(cls.id);
+  }
 
   const attemptsBySession = await Promise.all(
     sessions.map((s) => listAttemptsForSession(s.id)),
   );
   const totalAttempts = attemptsBySession.reduce((sum, arr) => sum + arr.length, 0);
 
+  // Collect all memberships for this user to display role badges
+  const userFamilyMemberships: FamilyMember[] = [];
+  const userClassMemberships: ClassMember[] = [];
+
+  for (const family of families) {
+    const members = familyMembersMap[family.id] || [];
+    const userMembership = members.find((m) => m.userId === userId);
+    if (userMembership) {
+      userFamilyMemberships.push(userMembership);
+    }
+  }
+
+  for (const cls of classes) {
+    const members = classMembersMap[cls.id] || [];
+    const userMembership = members.find((m) => m.userId === userId);
+    if (userMembership) {
+      userClassMemberships.push(userMembership);
+    }
+  }
+
+  // Fetch pending invite codes for each family
+  const familyInviteCodes: Record<string, string | null> = {};
+  const supabase = await getServerSupabase();
+
+  for (const family of families) {
+    const { data } = await supabase
+      .from('invite')
+      .select('code')
+      .eq('target_family_id', family.id)
+      .is('accepted_at', null)
+      .not('code', 'is', null)
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    familyInviteCodes[family.id] = data?.code || null;
+  }
+
   return (
     <section className="flex flex-col gap-6 py-6">
       <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
+        <RoleBadges
+          familyMemberships={userFamilyMemberships}
+          classMemberships={userClassMemberships}
+        />
         <p className="text-violet-900/80">Manage your profile and see your journal stats.</p>
       </header>
 
@@ -76,6 +138,33 @@ export default async function SettingsPage() {
             initialVideoCount={videoStats.videoCount}
             initialTotalBytes={videoStats.totalBytes}
           />
+        </div>
+      </section>
+
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold text-violet-900">Family</h2>
+          <a
+            href="/settings/accept-code"
+            className="text-sm text-violet-700 hover:text-violet-900 underline"
+          >
+            Have an invite code?
+          </a>
+        </div>
+        <div className={card}>
+          <FamilyPanel
+            families={families}
+            familyMembers={familyMembersMap}
+            inviteCodes={familyInviteCodes}
+            userId={userId}
+          />
+        </div>
+      </section>
+
+      <section>
+        <h2 className={sectionHeading}>Classes</h2>
+        <div className={card}>
+          <ClassPanel classes={classes} classMembers={classMembersMap} userId={userId} />
         </div>
       </section>
 

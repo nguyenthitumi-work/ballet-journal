@@ -1,12 +1,16 @@
-import type { PracticeSession, Rating, Skill, SkillAttempt } from '@/lib/types';
+import type { PracticeSession, Rating, Skill, SkillAttempt, PracticeNote } from '@/lib/types';
 import { CATEGORY_LABELS } from '@/lib/types';
 import AttemptVideo from './AttemptVideo';
 import AttemptPhoto from './AttemptPhoto';
+import { PracticeNotes } from './PracticeNotes';
 
 type Props = {
   session: PracticeSession;
   attempts: SkillAttempt[];
   skillsById: Map<string, Skill>;
+  notes: PracticeNote[];
+  canAddNotes: boolean;
+  authorNames: Record<string, string>;
 };
 
 const MOOD_EMOJI: Record<Rating, string> = {
@@ -94,7 +98,7 @@ function firstLine(text: string | null): string | null {
   return line.length > 120 ? `${line.slice(0, 117)}…` : line;
 }
 
-export function SessionCard({ session, attempts, skillsById }: Props) {
+export function SessionCard({ session, attempts, skillsById, notes, canAddNotes, authorNames }: Props) {
   const dateLabel = formatHistoryDate(session.startedAt);
   const durationLabel = formatDuration(session.durationSeconds ?? 0);
   const moodEmoji = session.moodRating ? MOOD_EMOJI[session.moodRating] : null;
@@ -191,6 +195,12 @@ export function SessionCard({ session, attempts, skillsById }: Props) {
             </p>
           </div>
         )}
+        <PracticeNotes
+          notes={notes}
+          sessionId={session.id}
+          canAddNote={canAddNotes}
+          authorNames={authorNames}
+        />
       </div>
     </details>
   );

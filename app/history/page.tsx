@@ -7,7 +7,11 @@ import {
   listSessionDaysInMonth,
 } from '@/lib/db/sessions';
 import { listSkills } from '@/lib/db/skills';
-import type { Skill, SkillAttempt } from '@/lib/types';
+import { getNotesForSession } from '@/lib/db/notes';
+import { getProfile } from '@/lib/db/profile';
+import { getAuthUserId } from '@/lib/auth';
+import { getViewedDancerId } from '@/lib/viewContext';
+import type { Skill, SkillAttempt, PracticeNote } from '@/lib/types';
 import { StreakBanner } from './_components/StreakBanner';
 import { SessionCard } from './_components/SessionCard';
 import { MonthCalendar, type DayBucket } from './_components/MonthCalendar';
@@ -65,6 +69,10 @@ export default async function HistoryPage(props: HistoryPageProps) {
     redirect('/onboarding');
   }
 
+  const authUserId = await getAuthUserId();
+  const viewedDancerId = await getViewedDancerId();
+  const canAddNotes = authUserId !== viewedDancerId;
+
   const sp = await props.searchParams;
   const milestonesOnly = firstParam(sp.milestones) === '1';
   const dateParam = firstParam(sp.date);
@@ -96,16 +104,16 @@ export default async function HistoryPage(props: HistoryPageProps) {
     dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : null;
 
   const [sessions, skills, monthDays] = await Promise.all([
-    listSessions(userId),
-    listSkills(userId),
-    listSessionDaysInMonth(userId, calendarYear, calendarMonthIdx),
+    listSessions(viewedDancerId),
+    listSkills(viewedDancerId),
+    listSessionDaysInMonth(viewedDancerId, calendarYear, calendarMonthIdx),
   ]);
 
   // PERF: per-session attempt fetch in parallel (N round-trips). Acceptable for v1
   // (few sessions). When this grows, replace with a single `skill_attempt` query
   // filtered by `session_id in (...)` grouped client-side.
-  const attemptsBySession: Map<string, SkillAttempt[]> = new Map(
-    await Promise.all(
+  const [attemptsData, notesData] = await Promise.all([
+    Promise.all(
       sessions.map(
         async (s): Promise<[string, SkillAttempt[]]> => [
           s.id,
@@ -113,6 +121,31 @@ export default async function HistoryPage(props: HistoryPageProps) {
         ],
       ),
     ),
+    Promise.all(
+      sessions.map(
+        async (s): Promise<[string, PracticeNote[]]> => [
+          s.id,
+          await getNotesForSession(s.id),
+        ],
+      ),
+    ),
+  ]);
+
+  const attemptsBySession: Map<string, SkillAttempt[]> = new Map(attemptsData);
+  const notesBySession: Map<string, PracticeNote[]> = new Map(notesData);
+
+  const allAuthorIds = new Set<string>();
+  for (const notes of notesBySession.values()) {
+    for (const note of notes) {
+      allAuthorIds.add(note.authorUserId);
+    }
+  }
+  const authorNames: Record<string, string> = {};
+  await Promise.all(
+    Array.from(allAuthorIds).map(async (id) => {
+      const p = await getProfile(id);
+      authorNames[id] = p?.name || 'Unknown';
+    }),
   );
 
   const skillsById: Map<string, Skill> = new Map(skills.map((s) => [s.id, s]));
@@ -254,6 +287,9 @@ export default async function HistoryPage(props: HistoryPageProps) {
               session={s}
               attempts={visibleAttemptsFor(s.id)}
               skillsById={skillsById}
+              notes={notesBySession.get(s.id) ?? []}
+              canAddNotes={canAddNotes}
+              authorNames={authorNames}
             />
           ))}
         </div>

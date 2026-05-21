@@ -286,3 +286,163 @@ export const attemptFromRow = (r: SkillAttemptRow): SkillAttempt => ({
   photoPath: r.photo_path,
   photoSizeBytes: r.photo_size_bytes,
 });
+
+export type FamilyRole = 'parent' | 'dancer';
+export type ClassRole = 'teacher' | 'student';
+export type InviteTargetRole = FamilyRole | ClassRole;
+
+export interface Family {
+  id: string;
+  name: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface FamilyMember {
+  familyId: string;
+  userId: string;
+  role: FamilyRole;
+  joinedAt: string;
+}
+
+export interface Class {
+  id: string;
+  name: string;
+  ownerId: string;
+  inviteCode: string | null;
+  createdAt: string;
+}
+
+export interface ClassMember {
+  classId: string;
+  userId: string;
+  role: ClassRole;
+  joinedAt: string;
+}
+
+export interface Invite {
+  id: string;
+  targetFamilyId: string | null;
+  targetClassId: string | null;
+  targetRole: InviteTargetRole;
+  code: string | null;
+  email: string | null;
+  expiresAt: string;
+  acceptedAt: string | null;
+  acceptedBy: string | null;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface PracticeNote {
+  id: string;
+  sessionId: string | null;
+  attemptId: string | null;
+  authorUserId: string;
+  body: string;
+  createdAt: string;
+}
+
+export interface FamilyRow {
+  id: string;
+  name: string;
+  created_by: string;
+  created_at: string;
+}
+
+export interface FamilyMemberRow {
+  family_id: string;
+  user_id: string;
+  role: FamilyRole;
+  joined_at: string;
+}
+
+export interface ClassRow {
+  id: string;
+  name: string;
+  owner_id: string;
+  invite_code: string | null;
+  created_at: string;
+}
+
+export interface ClassMemberRow {
+  class_id: string;
+  user_id: string;
+  role: ClassRole;
+  joined_at: string;
+}
+
+export interface InviteRow {
+  id: string;
+  target_family_id: string | null;
+  target_class_id: string | null;
+  target_role: InviteTargetRole;
+  code: string | null;
+  email: string | null;
+  expires_at: string;
+  accepted_at: string | null;
+  accepted_by: string | null;
+  created_by: string;
+  created_at: string;
+}
+
+export interface PracticeNoteRow {
+  id: string;
+  session_id: string | null;
+  attempt_id: string | null;
+  author_user_id: string;
+  body: string;
+  created_at: string;
+}
+
+export const familyFromRow = (r: FamilyRow): Family => ({
+  id: r.id,
+  name: r.name,
+  createdBy: r.created_by,
+  createdAt: r.created_at,
+});
+
+export const familyMemberFromRow = (r: FamilyMemberRow): FamilyMember => ({
+  familyId: r.family_id,
+  userId: r.user_id,
+  role: r.role,
+  joinedAt: r.joined_at,
+});
+
+export const classFromRow = (r: ClassRow): Class => ({
+  id: r.id,
+  name: r.name,
+  ownerId: r.owner_id,
+  inviteCode: r.invite_code,
+  createdAt: r.created_at,
+});
+
+export const classMemberFromRow = (r: ClassMemberRow): ClassMember => ({
+  classId: r.class_id,
+  userId: r.user_id,
+  role: r.role,
+  joinedAt: r.joined_at,
+});
+
+export const inviteFromRow = (r: InviteRow): Invite => ({
+  id: r.id,
+  targetFamilyId: r.target_family_id,
+  targetClassId: r.target_class_id,
+  targetRole: r.target_role,
+  code: r.code,
+  email: r.email,
+  expiresAt: r.expires_at,
+  acceptedAt: r.accepted_at,
+  acceptedBy: r.accepted_by,
+  createdBy: r.created_by,
+  createdAt: r.created_at,
+});
+
+export const practiceNoteFromRow = (r: PracticeNoteRow): PracticeNote => ({
+  id: r.id,
+  sessionId: r.session_id,
+  attemptId: r.attempt_id,
+  authorUserId: r.author_user_id,
+  body: r.body,
+  createdAt: r.created_at,
+});

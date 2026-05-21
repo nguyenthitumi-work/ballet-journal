@@ -3,6 +3,8 @@ import { Geist } from 'next/font/google';
 import './globals.css';
 import { NavBar } from '@/components/NavBar';
 import { getAuthUser } from '@/lib/auth';
+import { getViewableDancers } from '@/lib/db/families';
+import { getViewedDancerId } from '@/lib/viewContext';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -23,10 +25,23 @@ export default async function RootLayout({
   // /auth/callback) render bare. proxy.ts handles the auth gate.
   const user = await getAuthUser();
 
+  let viewableDancers;
+  let currentDancerId;
+  if (user) {
+    viewableDancers = await getViewableDancers(user.id);
+    currentDancerId = await getViewedDancerId();
+  }
+
   return (
     <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-violet-50/40 text-violet-950">
-        {user ? <NavBar email={user.email ?? null} /> : null}
+        {user ? (
+          <NavBar
+            email={user.email ?? null}
+            viewableDancers={viewableDancers}
+            currentDancerId={currentDancerId}
+          />
+        ) : null}
         <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6">{children}</main>
       </body>
     </html>

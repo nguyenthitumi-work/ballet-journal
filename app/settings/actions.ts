@@ -9,7 +9,9 @@ import {
   listUserVideoPaths,
 } from '@/lib/db/sessions';
 import { isValidDateOfBirth, MIN_AGE, MAX_AGE } from '@/lib/age';
-import type { Level } from '@/lib/types';
+import type { Level, ClassRole, FamilyRole } from '@/lib/types';
+import { createFamily, createInvite } from '@/lib/db/families';
+import { createClass, generateClassInviteCode } from '@/lib/db/classes';
 
 const VIDEO_BUCKET = 'practice-videos';
 
@@ -88,3 +90,53 @@ export async function deleteAllVideosForUser(): Promise<{ deleted: number }> {
   revalidatePath('/history');
   return { deleted: paths.length };
 }
+
+export async function createFamilyAction(name: string): Promise<void> {
+  const { userId } = await getSessionContext();
+  await createFamily(userId, name);
+  revalidatePath('/settings');
+}
+
+export async function generateFamilyInviteCodeAction(opts: {
+  familyId: string;
+  role: FamilyRole;
+}): Promise<{ code: string }> {
+  const { userId } = await getSessionContext();
+
+  const invite = await createInvite({
+    createdBy: userId,
+    targetFamilyId: opts.familyId,
+    targetRole: opts.role,
+    code: true,
+  });
+
+  revalidatePath('/settings');
+  return { code: invite.code! };
+}
+
+export async function createClassAction(name: string): Promise<void> {
+  const { userId } = await getSessionContext();
+  await createClass(userId, name);
+  revalidatePath('/settings');
+}
+
+export async function generateClassCodeAction(classId: string): Promise<void> {
+  await generateClassInviteCode(classId);
+  revalidatePath('/settings');
+}
+
+export async function deleteFamilyAction(familyId: string): Promise<void> {
+  const { userId } = await getSessionContext();
+  const supabase = await getServerSupabase();
+
+  // Only family creator can delete
+  const { error } = await supabase
+    .from('family')
+    .delete()
+    .eq('id', familyId)
+    .eq('created_by', userId);
+
+  if (error) throw new Error(error.message);
+  revalidatePath('/settings');
+}
+
