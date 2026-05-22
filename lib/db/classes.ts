@@ -61,6 +61,20 @@ export async function addClassMember(
   role: ClassRole,
 ): Promise<void> {
   const supabase = await getServerSupabase();
+
+  // Check if user is already a member
+  const { data: existing } = await supabase
+    .from('class_member')
+    .select('role')
+    .eq('class_id', classId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (existing) {
+    // User is already a member, no error - just return
+    return;
+  }
+
   const { error } = await supabase
     .from('class_member')
     .insert({ class_id: classId, user_id: userId, role });

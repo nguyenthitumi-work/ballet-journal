@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getSessionContext } from '@/lib/session';
 import { getInviteByCode, acceptInvite } from '@/lib/db/families';
+import { getClassByInviteCode, addClassMember } from '@/lib/db/classes';
 
 export default async function AcceptCodePage({
   searchParams,
@@ -20,13 +21,24 @@ export default async function AcceptCodePage({
       throw new Error('Please enter an invite code');
     }
 
-    const invite = await getInviteByCode(inviteCode.trim().toUpperCase());
-    if (!invite) {
-      throw new Error('Invalid or expired invite code');
+    const normalizedCode = inviteCode.trim().toUpperCase();
+
+    // First, try to find a formal invite (from invite table)
+    const invite = await getInviteByCode(normalizedCode);
+    if (invite) {
+      await acceptInvite(invite.id, authUserId);
+      redirect('/settings');
     }
 
-    await acceptInvite(invite.id, authUserId);
-    redirect('/settings');
+    // If not found, try class invite code (from class table)
+    const classInvite = await getClassByInviteCode(normalizedCode);
+    if (classInvite) {
+      // Add user as a student by default when joining via class code
+      await addClassMember(classInvite.id, authUserId, 'student');
+      redirect('/settings');
+    }
+
+    throw new Error('Invalid or expired invite code');
   }
 
   return (
