@@ -39,8 +39,8 @@ export async function getClasses(userId: string): Promise<Class[]> {
   if (!data) return [];
   return data
     .map((row) => row.class)
-    .filter(Boolean)
-    .map((c) => classFromRow(c as ClassRow));
+    .filter((c) => c !== null && c !== undefined && !Array.isArray(c))
+    .map((c) => classFromRow(c as unknown as ClassRow));
 }
 
 export async function getClassMembers(classId: string): Promise<ClassMember[]> {

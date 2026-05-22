@@ -48,8 +48,8 @@ export async function getFamilies(userId: string): Promise<Family[]> {
   if (!data) return [];
   return data
     .map((row) => row.family)
-    .filter(Boolean)
-    .map((f) => familyFromRow(f as FamilyRow));
+    .filter((f) => f !== null && f !== undefined && !Array.isArray(f))
+    .map((f) => familyFromRow(f as unknown as FamilyRow));
 }
 
 export async function getFamilyMembers(
