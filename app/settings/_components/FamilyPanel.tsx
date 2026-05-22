@@ -48,18 +48,21 @@ export default function FamilyPanel({ families, familyMembers, inviteCodes, user
         const members = familyMembers[family.id] || [];
         const inviteCode = inviteCodes[family.id];
         const role = selectedRole[family.id] || 'parent';
+        const isCreator = family.createdBy === userId;
 
         return (
           <div key={family.id} className="rounded-xl border border-violet-200 bg-white p-4 shadow-sm">
             <div className="flex items-start justify-between mb-2">
               <h3 className="font-semibold text-violet-900">{family.name}</h3>
-              <button
-                type="button"
-                onClick={() => handleDeleteFamily(family.id)}
-                className="text-xs text-red-600 hover:text-red-800 underline"
-              >
-                Delete
-              </button>
+              {isCreator && (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteFamily(family.id)}
+                  className="text-xs text-red-600 hover:text-red-800 underline"
+                >
+                  Delete
+                </button>
+              )}
             </div>
 
             {inviteCode && (
@@ -80,28 +83,30 @@ export default function FamilyPanel({ families, familyMembers, inviteCodes, user
               ))}
             </div>
 
-            <div className="mt-3 border-t border-violet-100 pt-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-violet-700 mb-2">
-                Generate Invite Code
-              </p>
-              <div className="flex gap-2">
-                <select
-                  value={role}
-                  onChange={(e) => setSelectedRole((prev) => ({ ...prev, [family.id]: e.target.value as 'parent' | 'dancer' }))}
-                  className="px-3 py-2 text-sm border border-violet-200 rounded"
-                >
-                  <option value="parent">Parent</option>
-                  <option value="dancer">Dancer</option>
-                </select>
-                <button
-                  type="button"
-                  onClick={() => handleGenerateCode(family.id)}
-                  className="px-4 py-2 text-sm bg-violet-600 text-white rounded hover:bg-violet-700"
-                >
-                  Generate Code
-                </button>
+            {isCreator && (
+              <div className="mt-3 border-t border-violet-100 pt-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-violet-700 mb-2">
+                  Generate Invite Code
+                </p>
+                <div className="flex gap-2">
+                  <select
+                    value={role}
+                    onChange={(e) => setSelectedRole((prev) => ({ ...prev, [family.id]: e.target.value as 'parent' | 'dancer' }))}
+                    className="px-3 py-2 text-sm border border-violet-200 rounded"
+                  >
+                    <option value="parent">Parent</option>
+                    <option value="dancer">Dancer</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => handleGenerateCode(family.id)}
+                    className="px-4 py-2 text-sm bg-violet-600 text-white rounded hover:bg-violet-700"
+                  >
+                    Generate Code
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         );
       })}

@@ -102,6 +102,19 @@ export async function generateFamilyInviteCodeAction(opts: {
   role: FamilyRole;
 }): Promise<{ code: string }> {
   const { userId } = await getSessionContext();
+  const supabase = await getServerSupabase();
+
+  // Verify user is the family creator
+  const { data: family, error: fetchError } = await supabase
+    .from('family')
+    .select('created_by')
+    .eq('id', opts.familyId)
+    .single();
+
+  if (fetchError) throw new Error('Family not found');
+  if (family.created_by !== userId) {
+    throw new Error('Only the family creator can generate invite codes');
+  }
 
   const invite = await createInvite({
     createdBy: userId,
