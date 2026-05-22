@@ -36,6 +36,7 @@ export default function ClassPanel({ classes, classMembers, userId }: ClassPanel
 
       {classes.map((cls) => {
         const members = classMembers[cls.id] || [];
+        const isOwner = cls.ownerId === userId;
         return (
           <div key={cls.id} className="rounded-xl border border-violet-200 bg-white p-4 shadow-sm">
             <h3 className="font-semibold text-violet-900">{cls.name}</h3>
@@ -58,25 +59,27 @@ export default function ClassPanel({ classes, classMembers, userId }: ClassPanel
               ))}
             </div>
 
-            <div className="mt-3 border-t border-violet-100 pt-3">
-              {!cls.inviteCode ? (
-                <button
-                  type="button"
-                  onClick={() => handleGenerateCode(cls.id)}
-                  className="px-4 py-2 text-sm bg-violet-600 text-white rounded hover:bg-violet-700"
-                >
-                  Generate Invite Code
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => handleGenerateCode(cls.id)}
-                  className="px-4 py-2 text-sm bg-violet-100 text-violet-700 rounded hover:bg-violet-200"
-                >
-                  Regenerate Code
-                </button>
-              )}
-            </div>
+            {isOwner && (
+              <div className="mt-3 border-t border-violet-100 pt-3">
+                {!cls.inviteCode ? (
+                  <button
+                    type="button"
+                    onClick={() => handleGenerateCode(cls.id)}
+                    className="px-4 py-2 text-sm bg-violet-600 text-white rounded hover:bg-violet-700"
+                  >
+                    Generate Invite Code
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleGenerateCode(cls.id)}
+                    className="px-4 py-2 text-sm bg-violet-100 text-violet-700 rounded hover:bg-violet-200"
+                  >
+                    Regenerate Code
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         );
       })}

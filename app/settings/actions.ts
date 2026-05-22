@@ -121,6 +121,21 @@ export async function createClassAction(name: string): Promise<void> {
 }
 
 export async function generateClassCodeAction(classId: string): Promise<void> {
+  const { userId } = await getSessionContext();
+  const supabase = await getServerSupabase();
+
+  // Verify user is the class owner
+  const { data: cls, error: fetchError } = await supabase
+    .from('class')
+    .select('owner_id')
+    .eq('id', classId)
+    .single();
+
+  if (fetchError) throw new Error('Class not found');
+  if (cls.owner_id !== userId) {
+    throw new Error('Only the class owner can generate invite codes');
+  }
+
   await generateClassInviteCode(classId);
   revalidatePath('/settings');
 }
