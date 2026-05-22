@@ -28,6 +28,7 @@ export default async function AcceptCodePage({
     if (invite) {
       await acceptInvite(invite.id, authUserId);
       redirect('/settings');
+      return;
     }
 
     // If not found, try class invite code (from class table)
@@ -36,6 +37,7 @@ export default async function AcceptCodePage({
       // Add user as a student by default when joining via class code
       await addClassMember(classInvite.id, authUserId, 'student');
       redirect('/settings');
+      return;
     }
 
     throw new Error('Invalid or expired invite code');
