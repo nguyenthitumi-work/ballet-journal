@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { Class, ClassMember } from '@/lib/types';
-import { createClassAction, generateClassCodeAction } from '../actions';
+import { createClassAction, generateClassCodeAction, deleteClassAction } from '../actions';
 
 interface ClassPanelProps {
   classes: Class[];
@@ -26,6 +26,13 @@ export default function ClassPanel({ classes, classMembers, userId }: ClassPanel
     await generateClassCodeAction(classId);
   }
 
+  async function handleDeleteClass(classId: string, className: string) {
+    if (!confirm(`Are you sure you want to delete the class "${className}"? This will remove all members and cannot be undone.`)) {
+      return;
+    }
+    await deleteClassAction(classId);
+  }
+
   return (
     <div className="flex flex-col gap-4">
       {classes.length === 0 && !isCreating && (
@@ -39,7 +46,18 @@ export default function ClassPanel({ classes, classMembers, userId }: ClassPanel
         const isOwner = cls.ownerId === userId;
         return (
           <div key={cls.id} className="rounded-xl border border-violet-200 bg-white p-4 shadow-sm">
-            <h3 className="font-semibold text-violet-900">{cls.name}</h3>
+            <div className="flex items-start justify-between mb-2">
+              <h3 className="font-semibold text-violet-900">{cls.name}</h3>
+              {isOwner && (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteClass(cls.id, cls.name)}
+                  className="text-xs text-red-600 hover:text-red-800 underline"
+                >
+                  Delete
+                </button>
+              )}
+            </div>
 
             {cls.inviteCode && (
               <div className="mt-2 rounded bg-violet-50 px-3 py-2">
@@ -52,11 +70,16 @@ export default function ClassPanel({ classes, classMembers, userId }: ClassPanel
             )}
 
             <div className="mt-2 flex flex-col gap-2">
-              {members.map((m) => (
-                <div key={m.userId} className="text-sm text-violet-900/80">
-                  <span className="font-medium capitalize">{m.role}</span> — User {m.userId.slice(0, 8)}
-                </div>
-              ))}
+              {members.length === 0 ? (
+                <p className="text-sm text-violet-900/70">No members yet</p>
+              ) : (
+                members.map((m) => (
+                  <div key={m.userId} className="text-sm text-violet-900/80">
+                    <span className="font-medium capitalize">{m.role}</span> —{' '}
+                    {m.userName || `User ${m.userId.slice(0, 8)}`}
+                  </div>
+                ))
+              )}
             </div>
 
             {isOwner && (

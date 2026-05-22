@@ -76,11 +76,16 @@ export default function FamilyPanel({ families, familyMembers, inviteCodes, user
             )}
 
             <div className="mt-2 flex flex-col gap-2">
-              {members.map((m) => (
-                <div key={m.userId} className="text-sm text-violet-900/80">
-                  <span className="font-medium capitalize">{m.role}</span> — User {m.userId.slice(0, 8)}
-                </div>
-              ))}
+              {members.length === 0 ? (
+                <p className="text-sm text-violet-900/70">No members yet</p>
+              ) : (
+                members.map((m) => (
+                  <div key={m.userId} className="text-sm text-violet-900/80">
+                    <span className="font-medium capitalize">{m.role}</span> —{' '}
+                    {m.userName || `User ${m.userId.slice(0, 8)}`}
+                  </div>
+                ))
+              )}
             </div>
 
             {isCreator && (

@@ -162,7 +162,15 @@ export default async function SettingsPage() {
       </section>
 
       <section>
-        <h2 className={sectionHeading}>Classes</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold text-violet-900">Classes</h2>
+          <a
+            href="/settings/accept-code"
+            className="text-sm text-violet-700 hover:text-violet-900 underline"
+          >
+            Have an invite code?
+          </a>
+        </div>
         <div className={card}>
           <ClassPanel classes={classes} classMembers={classMembersMap} userId={userId} />
         </div>

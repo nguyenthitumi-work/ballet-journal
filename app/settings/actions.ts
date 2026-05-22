@@ -168,3 +168,18 @@ export async function deleteFamilyAction(familyId: string): Promise<void> {
   revalidatePath('/settings');
 }
 
+export async function deleteClassAction(classId: string): Promise<void> {
+  const { userId } = await getSessionContext();
+  const supabase = await getServerSupabase();
+
+  // Only class owner can delete
+  const { error } = await supabase
+    .from('class')
+    .delete()
+    .eq('id', classId)
+    .eq('owner_id', userId);
+
+  if (error) throw new Error(error.message);
+  revalidatePath('/settings');
+}
+

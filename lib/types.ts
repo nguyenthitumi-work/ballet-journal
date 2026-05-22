@@ -303,6 +303,7 @@ export interface FamilyMember {
   userId: string;
   role: FamilyRole;
   joinedAt: string;
+  userName: string | null;
 }
 
 export interface Class {
@@ -318,6 +319,7 @@ export interface ClassMember {
   userId: string;
   role: ClassRole;
   joinedAt: string;
+  userName: string | null;
 }
 
 export interface Invite {
@@ -355,6 +357,7 @@ export interface FamilyMemberRow {
   user_id: string;
   role: FamilyRole;
   joined_at: string;
+  user_name?: string | null;
 }
 
 export interface ClassRow {
@@ -370,6 +373,7 @@ export interface ClassMemberRow {
   user_id: string;
   role: ClassRole;
   joined_at: string;
+  user_name?: string | null;
 }
 
 export interface InviteRow {
@@ -407,6 +411,7 @@ export const familyMemberFromRow = (r: FamilyMemberRow): FamilyMember => ({
   userId: r.user_id,
   role: r.role,
   joinedAt: r.joined_at,
+  userName: r.user_name ?? null,
 });
 
 export const classFromRow = (r: ClassRow): Class => ({
@@ -422,6 +427,7 @@ export const classMemberFromRow = (r: ClassMemberRow): ClassMember => ({
   userId: r.user_id,
   role: r.role,
   joinedAt: r.joined_at,
+  userName: r.user_name ?? null,
 });
 
 export const inviteFromRow = (r: InviteRow): Invite => ({

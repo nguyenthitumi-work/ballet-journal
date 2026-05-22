@@ -45,14 +45,35 @@ export async function getClasses(userId: string): Promise<Class[]> {
 
 export async function getClassMembers(classId: string): Promise<ClassMember[]> {
   const supabase = await getServerSupabase();
-  const { data, error } = await supabase
+
+  // Fetch class members
+  const { data: members, error: membersError } = await supabase
     .from('class_member')
     .select('*')
     .eq('class_id', classId)
     .order('joined_at', { ascending: true });
-  if (error) throw new Error(error.message);
-  if (!data) return [];
-  return data.map((r) => classMemberFromRow(r as ClassMemberRow));
+  if (membersError) throw new Error(membersError.message);
+  if (!members || members.length === 0) return [];
+
+  // Fetch profiles for all user IDs
+  const userIds = members.map(m => m.user_id);
+  const { data: profiles, error: profilesError } = await supabase
+    .from('user_profile')
+    .select('user_id, name')
+    .in('user_id', userIds);
+  if (profilesError) throw new Error(profilesError.message);
+
+  // Create a map for quick lookup
+  const profileMap = new Map(profiles?.map(p => [p.user_id, p.name]) ?? []);
+
+  // Combine members with profile names
+  return members.map((r) => classMemberFromRow({
+    class_id: r.class_id,
+    user_id: r.user_id,
+    role: r.role,
+    joined_at: r.joined_at,
+    user_name: profileMap.get(r.user_id) ?? null,
+  } as ClassMemberRow));
 }
 
 export async function addClassMember(
