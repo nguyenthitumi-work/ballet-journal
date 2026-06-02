@@ -187,7 +187,9 @@ export default async function SettingsPage() {
             A tiny notebook for tracking ballet practice — built with love for one dancer.
           </p>
           <a
-            href="#"
+            href="https://github.com/nguyenthitumi-work/-ballet-journal/blob/main/README.md"
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-sm font-medium text-violet-700 underline hover:text-violet-900"
           >
             View README on GitHub
