@@ -17,7 +17,9 @@ export async function getProfile(userId: string): Promise<UserProfile | null> {
 
 export async function updateProfile(
   userId: string,
-  patch: Partial<Pick<UserProfile, 'name' | 'dateOfBirth' | 'level' | 'dailySkillGoal'>>,
+  patch: Partial<
+    Pick<UserProfile, 'name' | 'dateOfBirth' | 'level' | 'dailySkillGoal' | 'colorTheme'>
+  >,
 ): Promise<UserProfile> {
   const supabase = await getServerSupabase();
   const row: Record<string, unknown> = {};
@@ -25,6 +27,7 @@ export async function updateProfile(
   if (patch.dateOfBirth !== undefined) row.date_of_birth = patch.dateOfBirth;
   if (patch.level !== undefined) row.level = patch.level;
   if (patch.dailySkillGoal !== undefined) row.daily_skill_goal = patch.dailySkillGoal;
+  if (patch.colorTheme !== undefined) row.color_theme = patch.colorTheme;
 
   const { data, error } = await supabase
     .from('user_profile')

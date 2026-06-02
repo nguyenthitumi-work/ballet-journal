@@ -13,6 +13,7 @@ import { getClasses, getClassMembers } from '@/lib/db/classes';
 import { getServerSupabase } from '@/lib/supabase/server';
 import type { FamilyMember, ClassMember } from '@/lib/types';
 import ProfileForm from './_components/ProfileForm';
+import ThemePicker from './_components/ThemePicker';
 import VideoStorageStats from './_components/VideoStorageStats';
 import FamilyPanel from './_components/FamilyPanel';
 import ClassPanel from './_components/ClassPanel';
@@ -121,6 +122,16 @@ export default async function SettingsPage() {
         <h2 className={sectionHeading}>Profile</h2>
         <div className={card}>
           <ProfileForm initialProfile={profile} />
+        </div>
+      </section>
+
+      <section>
+        <h2 className={sectionHeading}>Appearance</h2>
+        <div className={card}>
+          <p className="mb-3 text-sm text-violet-900/80">
+            Pick a color for the app. It saves to your profile and follows you across devices.
+          </p>
+          <ThemePicker current={profile.colorTheme} />
         </div>
       </section>
 

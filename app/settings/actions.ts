@@ -10,6 +10,7 @@ import {
 } from '@/lib/db/sessions';
 import { isValidDateOfBirth, MIN_AGE, MAX_AGE } from '@/lib/age';
 import type { Level, ClassRole, FamilyRole } from '@/lib/types';
+import { isThemeId } from '@/lib/themes';
 import { createFamily, createInvite } from '@/lib/db/families';
 import { createClass, generateClassInviteCode } from '@/lib/db/classes';
 
@@ -70,6 +71,18 @@ export async function updateProfileAction(
   revalidatePath('/settings');
   revalidatePath('/');
 
+  return { ok: true };
+}
+
+export async function updateColorThemeAction(theme: string): Promise<{ ok: true }> {
+  if (!isThemeId(theme)) {
+    throw new Error('Unknown color theme.');
+  }
+  const { userId } = await getSessionContext();
+  await updateProfile(userId, { colorTheme: theme });
+
+  // The theme is applied in the root layout, so revalidate the whole tree.
+  revalidatePath('/', 'layout');
   return { ok: true };
 }
 

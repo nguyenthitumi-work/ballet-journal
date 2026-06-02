@@ -3,8 +3,10 @@ import { Geist } from 'next/font/google';
 import './globals.css';
 import { NavBar } from '@/components/NavBar';
 import { getAuthUser } from '@/lib/auth';
+import { getProfile } from '@/lib/db/profile';
 import { getViewableDancers } from '@/lib/db/families';
 import { getViewedDancerId } from '@/lib/viewContext';
+import { DEFAULT_THEME, normalizeTheme, type ThemeId } from '@/lib/themes';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -27,13 +29,16 @@ export default async function RootLayout({
 
   let viewableDancers;
   let currentDancerId;
+  let theme: ThemeId = DEFAULT_THEME;
   if (user) {
     viewableDancers = await getViewableDancers(user.id);
     currentDancerId = await getViewedDancerId();
+    const profile = await getProfile(user.id);
+    theme = normalizeTheme(profile?.colorTheme);
   }
 
   return (
-    <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
+    <html lang="en" data-theme={theme} className={`${geistSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-violet-50/40 text-violet-950">
         {user ? (
           <NavBar
