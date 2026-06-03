@@ -14,8 +14,9 @@ export async function startSession(args: {
   userId: string;
   planId: string | null;
   orderedSkillIds: string[];
-  discipline?: 'ballet' | 'yoga';
+  discipline?: 'ballet' | 'yoga' | 'gym';
   flowId?: string | null;
+  workoutId?: string | null;
 }): Promise<PracticeSession> {
   const supabase = await getServerSupabase();
   const { data, error } = await supabase
@@ -26,6 +27,7 @@ export async function startSession(args: {
       ordered_skill_ids: args.orderedSkillIds,
       discipline: args.discipline ?? 'ballet',
       flow_id: args.flowId ?? null,
+      workout_id: args.workoutId ?? null,
     })
     .select('*')
     .single();
@@ -162,6 +164,41 @@ export async function recordAsanaAttempt(args: {
       asana_id: args.asanaId,
       rating: args.rating,
       notes: args.notes,
+      is_milestone: args.isMilestone,
+      duration_seconds: args.durationSeconds,
+    })
+    .select('*')
+    .single();
+  if (error) throw new Error(error.message);
+  return attemptFromRow(data as SkillAttemptRow);
+}
+
+/**
+ * Record one logged gym set as a skill_attempt (subject = exercise). reps and
+ * weight capture the set; rating defaults to a neutral "logged" value. This is
+ * what lets History, streaks and the dashboard key off the shared attempt table.
+ */
+export async function recordSet(args: {
+  userId: string;
+  sessionId: string;
+  exerciseId: string;
+  reps: number;
+  weight: number | null;
+  rating: Rating;
+  isMilestone: boolean;
+  durationSeconds: number;
+}): Promise<SkillAttempt> {
+  const supabase = await getServerSupabase();
+  const { data, error } = await supabase
+    .from('skill_attempt')
+    .insert({
+      user_id: args.userId,
+      session_id: args.sessionId,
+      exercise_id: args.exerciseId,
+      reps: args.reps,
+      weight: args.weight,
+      rating: args.rating,
+      notes: null,
       is_milestone: args.isMilestone,
       duration_seconds: args.durationSeconds,
     })

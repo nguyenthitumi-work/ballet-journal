@@ -1,5 +1,5 @@
 /*
- * Conservative service worker for the Ballet & Yoga Journal PWA.
+ * Conservative service worker for the Practice Journal PWA.
  *
  * Design goals (in order): never break online behavior, never serve stale
  * authenticated HTML, add an offline fallback for navigations.

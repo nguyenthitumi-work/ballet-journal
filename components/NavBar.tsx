@@ -34,7 +34,7 @@ export function NavBar({ email, viewableDancers, currentDancerId }: NavBarProps)
             href="/"
             className="text-lg font-semibold tracking-tight text-violet-700"
           >
-            Ballet-journal
+            Practice Journal
           </Link>
           <DisciplineSwitcher />
         </div>

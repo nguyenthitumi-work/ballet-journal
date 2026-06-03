@@ -20,7 +20,7 @@ export default async function GuidePage() {
     <section className="flex flex-col gap-6 py-2">
       <header className="flex flex-col gap-1">
         <h1 className="text-3xl font-semibold tracking-tight">
-          Hi! Welcome to Ballet-journal 🩰
+          Hi! Welcome to Practice Journal 🩰
         </h1>
         <p className="text-violet-900/80">
           Your little notebook for ballet. Read this whenever you forget how something
@@ -470,7 +470,7 @@ export default async function GuidePage() {
       <section id="privacy" className={card}>
         <h2 className={sectionHeading}>Your videos are safe</h2>
         <ul className={bullet}>
-          <li>Only <strong>you</strong> can see your videos. Even other Ballet-journal users can&apos;t.</li>
+          <li>Only <strong>you</strong> can see your videos. Even other Practice Journal users can&apos;t.</li>
           <li>The app makes a special private link just for you, and it only works for 5 minutes.</li>
           <li>The skeleton dots are drawn <strong>on your phone</strong>, not sent anywhere.</li>
           <li>You can erase all your videos anytime in <strong>Settings</strong>.</li>

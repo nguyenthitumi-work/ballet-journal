@@ -65,8 +65,35 @@ here rather than stubbed with non-functional code:
   webhooks, and entitlement gating; a product/business decision more than a code
   task.
 
-## Migration note
+## Gym discipline (full parity with yoga)
 
-`supabase/migrations/20260602010000_add_yoga.sql` is additive (asana, yoga_flow,
-`discipline` + `flow_id` on sessions, `asana_id` on attempts). Apply it before
-running against a live database.
+A third discipline, gym (strength training), was added on the same shared
+platform. Ballet and yoga are untouched; gym lives under `/gym`.
+
+- **Model:** `exercise` (analog of asana) and `workout` (analog of flow), but a
+  workout step carries set/rep/weight/rest targets. The defining difference —
+  **sets × reps × weight** — is stored by adding `reps` + `weight` columns to
+  `skill_attempt` and logging one row per set (`exercise_id`).
+- **Logging player:** `/gym/play/[sessionId]` (`GymLogger`) lets you log each set
+  (reps + weight) with rest timers between sets and a running volume total; the
+  session lands in History and advances the streak via the shared engine.
+- **Parity features:** exercise library + workouts (`/gym`, `/gym/workouts`),
+  custom workout builder (`/gym/workouts/new`), adaptive "Today's workout"
+  (Push/Pull/Legs split), progress dashboard (`/gym/progress`: workouts, sets,
+  total volume, streak, 14-day activity, most-trained lifts), and the **Gym**
+  entry in the discipline switcher. History renders each set as
+  `reps × weight` under the exercise name.
+- **Shared types** extended again: `Discipline` adds `'gym'`; sessions gain
+  `workoutId`; attempts gain `exerciseId` / `reps` / `weight`. The attempt
+  subject constraint is now "exactly one of skill / asana / exercise."
+
+## Migration notes
+
+Both migrations are additive; apply them in order before running against a live
+database:
+
+1. `supabase/migrations/20260602010000_add_yoga.sql` — asana, yoga_flow,
+   `discipline` + `flow_id` on sessions, `asana_id` on attempts.
+2. `supabase/migrations/20260602020000_add_gym.sql` — exercise, workout,
+   `workout_id` on sessions, `exercise_id` + `reps` + `weight` on attempts,
+   `discipline` extended to include `'gym'`, and the three-way subject CHECK.

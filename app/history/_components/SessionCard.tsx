@@ -9,6 +9,7 @@ type Props = {
   attempts: SkillAttempt[];
   skillsById: Map<string, Skill>;
   asanasById?: Map<string, { name: string }>;
+  exercisesById?: Map<string, { name: string }>;
   notes: PracticeNote[];
   canAddNotes: boolean;
   authorNames: Record<string, string>;
@@ -99,9 +100,9 @@ function firstLine(text: string | null): string | null {
   return line.length > 120 ? `${line.slice(0, 117)}…` : line;
 }
 
-export function SessionCard({ session, attempts, skillsById, asanasById, notes, canAddNotes, authorNames }: Props) {
-  const isYoga = session.discipline === 'yoga';
-  const itemNoun = isYoga ? 'pose' : 'skill';
+export function SessionCard({ session, attempts, skillsById, asanasById, exercisesById, notes, canAddNotes, authorNames }: Props) {
+  const itemNoun =
+    session.discipline === 'yoga' ? 'pose' : session.discipline === 'gym' ? 'set' : 'skill';
   const dateLabel = formatHistoryDate(session.startedAt);
   const durationLabel = formatDuration(session.durationSeconds ?? 0);
   const moodEmoji = session.moodRating ? MOOD_EMOJI[session.moodRating] : null;
@@ -143,12 +144,21 @@ export function SessionCard({ session, attempts, skillsById, asanasById, notes, 
             const skill = attempt.skillId ? skillsById.get(attempt.skillId) : undefined;
             const asana =
               !skill && attempt.asanaId ? asanasById?.get(attempt.asanaId) : undefined;
-            const skillName = skill?.name ?? asana?.name ?? `Unknown ${itemNoun}`;
+            const exercise =
+              !skill && !asana && attempt.exerciseId
+                ? exercisesById?.get(attempt.exerciseId)
+                : undefined;
+            const skillName =
+              skill?.name ?? asana?.name ?? exercise?.name ?? `Unknown ${itemNoun}`;
             const categoryLabel = skill
               ? CATEGORY_LABELS[skill.categoryId]
               : asana
                 ? 'Yoga'
-                : null;
+                : exercise
+                  ? attempt.weight !== null
+                    ? `${attempt.reps ?? 0} × ${attempt.weight}`
+                    : `${attempt.reps ?? 0} reps`
+                  : null;
             return (
               <div
                 key={attempt.id}

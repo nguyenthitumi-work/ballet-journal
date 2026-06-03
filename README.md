@@ -1,7 +1,8 @@
-# Ballet Journal
+# Practice Journal
 
-A tiny Next.js web app for tracking a young dancer's ballet progress.
-Built for one specific 10-year-old first, then generalizable later.
+A Next.js web app for tracking movement practice across disciplines — ballet,
+yoga, and gym. Originally built as a ballet journal for one specific
+10-year-old, then generalized into a shared multi-discipline platform.
 
 ## What's in v1
 
@@ -86,7 +87,7 @@ Apply every file under `supabase/migrations/` in chronological order via the SQL
 
    ```html
    <h2>Your sign-in code</h2>
-   <p>Use this code to sign in to Ballet Journal:</p>
+   <p>Use this code to sign in to Practice Journal:</p>
    <p style="font-size: 24px; letter-spacing: 4px; font-weight: bold;">{{ .Token }}</p>
    <p>This code expires in 1 hour.</p>
    ```

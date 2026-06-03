@@ -24,24 +24,16 @@ export function ViewContextSwitcher({ dancers, currentDancerId }: ViewContextSwi
     <div className="relative">
       <button
         type="button"
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
+        aria-label={`Viewing: ${currentDancer?.name || 'Unknown'}`}
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-md bg-violet-100 px-3 py-1.5 text-sm font-medium text-violet-700 hover:bg-violet-200"
+        className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-medium text-violet-700 transition hover:border-violet-400"
       >
-        <span className="text-xs">Viewing:</span>
         <span>{currentDancer?.name || 'Unknown'}</span>
-        <svg
-          className="h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 9l-7 7-7-7"
-          />
-        </svg>
+        <span aria-hidden className={`transition ${isOpen ? 'rotate-180' : ''}`}>
+          ▾
+        </span>
       </button>
 
       {isOpen && (
@@ -50,7 +42,7 @@ export function ViewContextSwitcher({ dancers, currentDancerId }: ViewContextSwi
             className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-lg border border-violet-200 bg-white shadow-lg">
+          <div className="absolute right-0 top-full z-20 mt-2 w-48 overflow-hidden rounded-xl border border-violet-100 bg-white shadow-lg">
             {dancers.map((d) => (
               <button
                 key={d.userId}

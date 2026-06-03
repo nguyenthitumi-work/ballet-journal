@@ -4,9 +4,9 @@ import type { MetadataRoute } from 'next';
 // Next serves this at /manifest.webmanifest and auto-links it from <head>.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Ballet & Yoga Journal',
-    short_name: 'Journal',
-    description: 'Track ballet and yoga practice — poses, flows, and progress.',
+    name: 'Practice Journal',
+    short_name: 'Practice',
+    description: 'Track your ballet, yoga, and gym practice — skills, flows, lifts, and progress.',
     start_url: '/',
     display: 'standalone',
     background_color: '#faf5ff',

@@ -191,7 +191,7 @@ export default async function SettingsPage() {
         <h2 className={sectionHeading}>About</h2>
         <div className={`${card} flex flex-col gap-2`}>
           <div className="flex items-baseline justify-between">
-            <span className="font-medium">Ballet-journal</span>
+            <span className="font-medium">Practice Journal</span>
             <span className="text-sm text-violet-700">v0.1.0</span>
           </div>
           <p className="text-sm text-violet-900/80">

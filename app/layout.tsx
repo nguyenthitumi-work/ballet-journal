@@ -15,8 +15,8 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: 'Ballet-journal',
-  description: 'A tiny notebook for tracking ballet practice.',
+  title: 'Practice Journal',
+  description: 'Track your ballet, yoga, and gym practice.',
 };
 
 export default async function RootLayout({

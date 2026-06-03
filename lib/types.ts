@@ -83,7 +83,7 @@ export interface PracticePlan {
   createdAt: string;
 }
 
-export type Discipline = 'ballet' | 'yoga';
+export type Discipline = 'ballet' | 'yoga' | 'gym';
 
 export interface PracticeSession {
   id: string;
@@ -97,6 +97,7 @@ export interface PracticeSession {
   orderedSkillIds: string[];
   discipline: Discipline;
   flowId: string | null;
+  workoutId: string | null;
 }
 
 export interface SkillAttempt {
@@ -104,6 +105,9 @@ export interface SkillAttempt {
   sessionId: string;
   skillId: string | null;
   asanaId: string | null;
+  exerciseId: string | null;
+  reps: number | null;
+  weight: number | null;
   rating: Rating;
   notes: string | null;
   isMilestone: boolean;
@@ -179,6 +183,7 @@ export interface PracticeSessionRow {
   ordered_skill_ids: string[];
   discipline?: Discipline;
   flow_id?: string | null;
+  workout_id?: string | null;
 }
 
 export interface SkillAttemptRow {
@@ -186,6 +191,9 @@ export interface SkillAttemptRow {
   session_id: string;
   skill_id: string | null;
   asana_id?: string | null;
+  exercise_id?: string | null;
+  reps?: number | null;
+  weight?: number | null;
   rating: number;
   notes: string | null;
   is_milestone: boolean;
@@ -285,6 +293,7 @@ export const sessionFromRow = (r: PracticeSessionRow): PracticeSession => ({
   orderedSkillIds: r.ordered_skill_ids ?? [],
   discipline: r.discipline ?? 'ballet',
   flowId: r.flow_id ?? null,
+  workoutId: r.workout_id ?? null,
 });
 
 export const attemptFromRow = (r: SkillAttemptRow): SkillAttempt => ({
@@ -292,6 +301,9 @@ export const attemptFromRow = (r: SkillAttemptRow): SkillAttempt => ({
   sessionId: r.session_id,
   skillId: r.skill_id,
   asanaId: r.asana_id ?? null,
+  exerciseId: r.exercise_id ?? null,
+  reps: r.reps ?? null,
+  weight: r.weight ?? null,
   rating: r.rating as Rating,
   notes: r.notes,
   isMilestone: r.is_milestone,

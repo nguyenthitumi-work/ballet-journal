@@ -1,4 +1,4 @@
-# Hi! Welcome to Ballet-journal 🩰
+# Hi! Welcome to Practice Journal 🩰
 
 This is your little notebook for ballet. It helps you keep track of all the cool
 things you can already do, the things you're working on, and the days you danced.
@@ -340,7 +340,7 @@ That's the whole thing. Have fun! 💜
 
 ## Your videos are safe
 
-- Only **you** can see your videos. Even other Ballet-journal users can't.
+- Only **you** can see your videos. Even other Practice Journal users can't.
 - The app makes a special private link just for you, and it only works for 5 minutes.
 - The skeleton dots are drawn **on your phone**, not sent anywhere.
 - You can erase all your videos anytime in **Settings**.
