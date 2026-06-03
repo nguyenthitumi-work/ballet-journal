@@ -13,6 +13,7 @@ import type { Level, ClassRole, FamilyRole, Discipline } from '@/lib/types';
 import { isThemeId } from '@/lib/themes';
 import { createFamily, createInvite } from '@/lib/db/families';
 import { createClass, generateClassInviteCode } from '@/lib/db/classes';
+import { setDisciplineLevel } from '@/lib/db/disciplineProfile';
 
 const VIDEO_BUCKET = 'practice-videos';
 
@@ -110,6 +111,24 @@ function toDiscipline(value: string | undefined): Discipline {
   return value && (VALID_DISCIPLINES as readonly string[]).includes(value)
     ? (value as Discipline)
     : 'ballet';
+}
+
+// Set the level for a single discipline (yoga/gym keep their own level in
+// discipline_profile; ballet's level is edited via the main profile form).
+export async function setDisciplineLevelAction(
+  discipline: string,
+  level: string,
+): Promise<{ ok: true }> {
+  if (!(VALID_DISCIPLINES as readonly string[]).includes(discipline)) {
+    throw new Error('Unknown discipline.');
+  }
+  if (!isLevel(level)) {
+    throw new Error('Please pick a valid level.');
+  }
+  const { userId } = await getSessionContext();
+  await setDisciplineLevel(userId, discipline as Discipline, level);
+  revalidatePath('/settings');
+  return { ok: true };
 }
 
 export async function createFamilyAction(name: string, discipline?: string): Promise<void> {

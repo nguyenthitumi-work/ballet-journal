@@ -10,6 +10,7 @@ import {
 import { listPlans } from '@/lib/db/plans';
 import { getFamilies, getFamilyMembers } from '@/lib/db/families';
 import { getClasses, getClassMembers } from '@/lib/db/classes';
+import { getDisciplineState } from '@/lib/db/disciplineProfile';
 import { getServerSupabase } from '@/lib/supabase/server';
 import type { FamilyMember, ClassMember } from '@/lib/types';
 import ProfileForm from './_components/ProfileForm';
@@ -17,6 +18,7 @@ import ThemePicker from './_components/ThemePicker';
 import VideoStorageStats from './_components/VideoStorageStats';
 import FamilyPanel from './_components/FamilyPanel';
 import ClassPanel from './_components/ClassPanel';
+import DisciplineLevelPicker from './_components/DisciplineLevelPicker';
 import { RoleBadges } from './_components/RoleBadges';
 
 const sectionHeading = 'text-lg font-semibold text-violet-900 mb-3';
@@ -59,6 +61,8 @@ export default async function SettingsPage(props: {
 
   const sp = await props.searchParams;
   const discipline = parseDiscipline(sp.d);
+  const disciplineLevel =
+    discipline === 'ballet' ? null : (await getDisciplineState(userId, discipline)).level;
 
   const [skills, focusSkills, plans, sessions, videoStats, families, classes] = await Promise.all([
     listSkills(userId),
@@ -168,6 +172,19 @@ export default async function SettingsPage(props: {
           />
         </div>
       </section>
+
+      {disciplineLevel ? (
+        <section>
+          <h2 className={sectionHeading}>{DISCIPLINE_LABELS[discipline]} level</h2>
+          <div className={card}>
+            <DisciplineLevelPicker
+              discipline={discipline}
+              disciplineLabel={DISCIPLINE_LABELS[discipline]}
+              currentLevel={disciplineLevel}
+            />
+          </div>
+        </section>
+      ) : null}
 
       <section>
         <div className="flex items-center justify-between mb-3">
