@@ -40,6 +40,7 @@ export async function getWeeklySummary(
       .from('practice_session')
       .select('started_at, duration_seconds')
       .eq('user_id', userId)
+      .eq('discipline', 'ballet')
       .not('ended_at', 'is', null)
       .gte('started_at', priorStartIso)
       .lt('started_at', endIso),
@@ -47,6 +48,7 @@ export async function getWeeklySummary(
       .from('skill_attempt')
       .select('skill_id, attempted_at, rating, duration_seconds, is_milestone')
       .eq('user_id', userId)
+      .not('skill_id', 'is', null)
       .gte('attempted_at', priorStartIso)
       .lt('attempted_at', endIso),
     supabase

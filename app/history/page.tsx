@@ -7,6 +7,7 @@ import {
   listSessionDaysInMonth,
 } from '@/lib/db/sessions';
 import { listSkills } from '@/lib/db/skills';
+import { listAsanas } from '@/lib/db/asanas';
 import { getNotesForSession } from '@/lib/db/notes';
 import { getProfile } from '@/lib/db/profile';
 import { getAuthUserId } from '@/lib/auth';
@@ -63,7 +64,7 @@ function monthKey(year: number, monthIdx: number): string {
 }
 
 export default async function HistoryPage(props: HistoryPageProps) {
-  const { userId, profile, onboarded } = await getSessionContext();
+  const { profile, onboarded } = await getSessionContext();
 
   if (!onboarded) {
     redirect('/onboarding');
@@ -103,11 +104,13 @@ export default async function HistoryPage(props: HistoryPageProps) {
   const selectedYmd =
     dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : null;
 
-  const [sessions, skills, monthDays] = await Promise.all([
+  const [sessions, skills, asanas, monthDays] = await Promise.all([
     listSessions(viewedDancerId),
     listSkills(viewedDancerId),
+    listAsanas(viewedDancerId),
     listSessionDaysInMonth(viewedDancerId, calendarYear, calendarMonthIdx),
   ]);
+  const asanasById = new Map(asanas.map((a) => [a.id, { name: a.name }]));
 
   // PERF: per-session attempt fetch in parallel (N round-trips). Acceptable for v1
   // (few sessions). When this grows, replace with a single `skill_attempt` query
@@ -287,6 +290,7 @@ export default async function HistoryPage(props: HistoryPageProps) {
               session={s}
               attempts={visibleAttemptsFor(s.id)}
               skillsById={skillsById}
+              asanasById={asanasById}
               notes={notesBySession.get(s.id) ?? []}
               canAddNotes={canAddNotes}
               authorNames={authorNames}

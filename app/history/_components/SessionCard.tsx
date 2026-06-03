@@ -8,6 +8,7 @@ type Props = {
   session: PracticeSession;
   attempts: SkillAttempt[];
   skillsById: Map<string, Skill>;
+  asanasById?: Map<string, { name: string }>;
   notes: PracticeNote[];
   canAddNotes: boolean;
   authorNames: Record<string, string>;
@@ -98,7 +99,9 @@ function firstLine(text: string | null): string | null {
   return line.length > 120 ? `${line.slice(0, 117)}…` : line;
 }
 
-export function SessionCard({ session, attempts, skillsById, notes, canAddNotes, authorNames }: Props) {
+export function SessionCard({ session, attempts, skillsById, asanasById, notes, canAddNotes, authorNames }: Props) {
+  const isYoga = session.discipline === 'yoga';
+  const itemNoun = isYoga ? 'pose' : 'skill';
   const dateLabel = formatHistoryDate(session.startedAt);
   const durationLabel = formatDuration(session.durationSeconds ?? 0);
   const moodEmoji = session.moodRating ? MOOD_EMOJI[session.moodRating] : null;
@@ -124,7 +127,7 @@ export function SessionCard({ session, attempts, skillsById, notes, canAddNotes,
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-violet-900/70">
           <span>{durationLabel}</span>
           <span>
-            {attempts.length} {attempts.length === 1 ? 'skill' : 'skills'}
+            {attempts.length} {attempts.length === 1 ? itemNoun : `${itemNoun}s`}
           </span>
         </div>
         {notesPreview && (
@@ -134,12 +137,18 @@ export function SessionCard({ session, attempts, skillsById, notes, canAddNotes,
 
       <div className="mt-4 flex flex-col gap-3 border-t border-violet-100 pt-4">
         {attempts.length === 0 ? (
-          <p className="text-sm text-violet-900/60">No skills logged in this session.</p>
+          <p className="text-sm text-violet-900/60">No {itemNoun}s logged in this session.</p>
         ) : (
           attempts.map((attempt) => {
-            const skill = skillsById.get(attempt.skillId);
-            const skillName = skill?.name ?? 'Unknown skill';
-            const categoryLabel = skill ? CATEGORY_LABELS[skill.categoryId] : null;
+            const skill = attempt.skillId ? skillsById.get(attempt.skillId) : undefined;
+            const asana =
+              !skill && attempt.asanaId ? asanasById?.get(attempt.asanaId) : undefined;
+            const skillName = skill?.name ?? asana?.name ?? `Unknown ${itemNoun}`;
+            const categoryLabel = skill
+              ? CATEGORY_LABELS[skill.categoryId]
+              : asana
+                ? 'Yoga'
+                : null;
             return (
               <div
                 key={attempt.id}

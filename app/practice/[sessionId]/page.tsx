@@ -56,7 +56,9 @@ export default async function PracticeSessionPage(props: {
 
   const skillOrder = session.orderedSkillIds;
   const attempts = await listAttemptsForSession(sessionId);
-  const attemptedSet = new Set(attempts.map((a) => a.skillId));
+  const attemptedSet = new Set(
+    attempts.map((a) => a.skillId).filter((id): id is string => id !== null),
+  );
 
   if (skillOrder.length === 0) {
     return (

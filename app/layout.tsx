@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Geist } from 'next/font/google';
 import './globals.css';
 import { NavBar } from '@/components/NavBar';
+import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
 import { getAuthUser } from '@/lib/auth';
 import { getProfile } from '@/lib/db/profile';
 import { getViewableDancers } from '@/lib/db/families';
@@ -40,6 +41,7 @@ export default async function RootLayout({
   return (
     <html lang="en" data-theme={theme} className={`${geistSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-violet-50/40 text-violet-950">
+        <ServiceWorkerRegister />
         {user ? (
           <NavBar
             email={user.email ?? null}

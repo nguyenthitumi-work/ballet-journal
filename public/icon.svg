@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Journal">
+  <rect width="512" height="512" rx="112" fill="#6d28d9"/>
+  <g fill="#ffffff">
+    <circle cx="256" cy="150" r="40"/>
+    <path d="M256 206c-18 0-30 14-34 32l-26 104a20 20 0 0 0 39 10l13-52h16l13 52a20 20 0 0 0 39-10l-26-104c-4-18-16-32-34-32z"/>
+    <path d="M150 250c-12-6-22 0-26 10s2 21 14 26l60 26 8-44z" opacity="0.85"/>
+    <path d="M362 250c12-6 22 0 26 10s-2 21-14 26l-60 26-8-44z" opacity="0.85"/>
+  </g>
+</svg>

@@ -51,7 +51,9 @@ export default async function MilestonesPage() {
 
   // Drop orphans defensively; ON DELETE CASCADE already prevents them at the DB
   // level, but a missing skill row here would otherwise render "Unknown skill".
-  const visible = attempts.filter((a) => skillsById.has(a.skillId));
+  // Yoga milestones (asana-backed, skill_id null) are excluded — this page is
+  // ballet-only for now.
+  const visible = attempts.filter((a) => a.skillId !== null && skillsById.has(a.skillId));
 
   const totalLabel = `${visible.length} ${visible.length === 1 ? 'milestone' : 'milestones'}`;
 
@@ -99,7 +101,7 @@ export default async function MilestonesPage() {
               </h2>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {g.items.map((a) => {
-                  const skill = skillsById.get(a.skillId)!;
+                  const skill = skillsById.get(a.skillId as string)!;
                   return (
                     <MilestoneCard
                       key={a.id}

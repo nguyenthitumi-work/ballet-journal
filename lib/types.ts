@@ -83,6 +83,8 @@ export interface PracticePlan {
   createdAt: string;
 }
 
+export type Discipline = 'ballet' | 'yoga';
+
 export interface PracticeSession {
   id: string;
   userId: string;
@@ -93,12 +95,15 @@ export interface PracticeSession {
   moodRating: Rating | null;
   overallNotes: string | null;
   orderedSkillIds: string[];
+  discipline: Discipline;
+  flowId: string | null;
 }
 
 export interface SkillAttempt {
   id: string;
   sessionId: string;
-  skillId: string;
+  skillId: string | null;
+  asanaId: string | null;
   rating: Rating;
   notes: string | null;
   isMilestone: boolean;
@@ -172,12 +177,15 @@ export interface PracticeSessionRow {
   mood_rating: number | null;
   overall_notes: string | null;
   ordered_skill_ids: string[];
+  discipline?: Discipline;
+  flow_id?: string | null;
 }
 
 export interface SkillAttemptRow {
   id: string;
   session_id: string;
-  skill_id: string;
+  skill_id: string | null;
+  asana_id?: string | null;
   rating: number;
   notes: string | null;
   is_milestone: boolean;
@@ -275,12 +283,15 @@ export const sessionFromRow = (r: PracticeSessionRow): PracticeSession => ({
   moodRating: r.mood_rating as Rating | null,
   overallNotes: r.overall_notes,
   orderedSkillIds: r.ordered_skill_ids ?? [],
+  discipline: r.discipline ?? 'ballet',
+  flowId: r.flow_id ?? null,
 });
 
 export const attemptFromRow = (r: SkillAttemptRow): SkillAttempt => ({
   id: r.id,
   sessionId: r.session_id,
   skillId: r.skill_id,
+  asanaId: r.asana_id ?? null,
   rating: r.rating as Rating,
   notes: r.notes,
   isMilestone: r.is_milestone,

@@ -14,6 +14,8 @@ export async function startSession(args: {
   userId: string;
   planId: string | null;
   orderedSkillIds: string[];
+  discipline?: 'ballet' | 'yoga';
+  flowId?: string | null;
 }): Promise<PracticeSession> {
   const supabase = await getServerSupabase();
   const { data, error } = await supabase
@@ -22,6 +24,8 @@ export async function startSession(args: {
       user_id: args.userId,
       plan_id: args.planId,
       ordered_skill_ids: args.orderedSkillIds,
+      discipline: args.discipline ?? 'ballet',
+      flow_id: args.flowId ?? null,
     })
     .select('*')
     .single();
@@ -123,6 +127,39 @@ export async function recordAttempt(args: {
       user_id: args.userId,
       session_id: args.sessionId,
       skill_id: args.skillId,
+      rating: args.rating,
+      notes: args.notes,
+      is_milestone: args.isMilestone,
+      duration_seconds: args.durationSeconds,
+    })
+    .select('*')
+    .single();
+  if (error) throw new Error(error.message);
+  return attemptFromRow(data as SkillAttemptRow);
+}
+
+/**
+ * Record a completed yoga hold. The yoga analog of recordAttempt: writes a
+ * skill_attempt row whose subject is an asana (skill_id stays null; the DB
+ * CHECK enforces exactly one of skill_id / asana_id). Everything downstream —
+ * History, streaks, video — keys off the same skill_attempt table.
+ */
+export async function recordAsanaAttempt(args: {
+  userId: string;
+  sessionId: string;
+  asanaId: string;
+  rating: Rating;
+  notes: string | null;
+  isMilestone: boolean;
+  durationSeconds: number;
+}): Promise<SkillAttempt> {
+  const supabase = await getServerSupabase();
+  const { data, error } = await supabase
+    .from('skill_attempt')
+    .insert({
+      user_id: args.userId,
+      session_id: args.sessionId,
+      asana_id: args.asanaId,
       rating: args.rating,
       notes: args.notes,
       is_milestone: args.isMilestone,
@@ -325,13 +362,14 @@ export async function countDistinctSkillsToday(
     .from('skill_attempt')
     .select('skill_id, attempted_at')
     .eq('user_id', userId)
+    .not('skill_id', 'is', null)
     .gte('attempted_at', startIso)
     .lt('attempted_at', endIso);
   if (error) throw new Error(error.message);
-  const rows = (data ?? []) as Array<{ skill_id: string; attempted_at: string }>;
+  const rows = (data ?? []) as Array<{ skill_id: string | null; attempted_at: string }>;
   const skillIds = new Set<string>();
   for (const r of rows) {
-    if (formatLocalDate(new Date(r.attempted_at), tz) === todayLocal) {
+    if (r.skill_id && formatLocalDate(new Date(r.attempted_at), tz) === todayLocal) {
       skillIds.add(r.skill_id);
     }
   }
