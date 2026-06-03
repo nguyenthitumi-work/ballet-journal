@@ -324,6 +324,7 @@ export interface Family {
   name: string;
   createdBy: string;
   createdAt: string;
+  discipline: Discipline;
 }
 
 export interface FamilyMember {
@@ -340,6 +341,7 @@ export interface Class {
   ownerId: string;
   inviteCode: string | null;
   createdAt: string;
+  discipline: Discipline;
 }
 
 export interface ClassMember {
@@ -378,6 +380,7 @@ export interface FamilyRow {
   name: string;
   created_by: string;
   created_at: string;
+  discipline?: Discipline;
 }
 
 export interface FamilyMemberRow {
@@ -394,6 +397,7 @@ export interface ClassRow {
   owner_id: string;
   invite_code: string | null;
   created_at: string;
+  discipline?: Discipline;
 }
 
 export interface ClassMemberRow {
@@ -432,6 +436,7 @@ export const familyFromRow = (r: FamilyRow): Family => ({
   name: r.name,
   createdBy: r.created_by,
   createdAt: r.created_at,
+  discipline: r.discipline ?? 'ballet',
 });
 
 export const familyMemberFromRow = (r: FamilyMemberRow): FamilyMember => ({
@@ -448,6 +453,7 @@ export const classFromRow = (r: ClassRow): Class => ({
   ownerId: r.owner_id,
   inviteCode: r.invite_code,
   createdAt: r.created_at,
+  discipline: r.discipline ?? 'ballet',
 });
 
 export const classMemberFromRow = (r: ClassMemberRow): ClassMember => ({

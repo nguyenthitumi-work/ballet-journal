@@ -8,16 +8,17 @@ interface ClassPanelProps {
   classes: Class[];
   classMembers: Record<string, ClassMember[]>;
   userId: string;
+  discipline?: string;
 }
 
-export default function ClassPanel({ classes, classMembers, userId }: ClassPanelProps) {
+export default function ClassPanel({ classes, classMembers, userId, discipline }: ClassPanelProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [newClassName, setNewClassName] = useState('');
 
   async function handleCreateClass(e: React.FormEvent) {
     e.preventDefault();
     if (!newClassName.trim()) return;
-    await createClassAction(newClassName.trim());
+    await createClassAction(newClassName.trim(), discipline);
     setNewClassName('');
     setIsCreating(false);
   }

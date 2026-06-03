@@ -1,7 +1,5 @@
-import type { UserProfile } from '@/lib/types';
-
 type Props = {
-  profile: UserProfile;
+  streak: number;
 };
 
 function getStreakMessage(streak: number): string {
@@ -11,8 +9,8 @@ function getStreakMessage(streak: number): string {
   return `${streak}-day streak! 🌟`;
 }
 
-export function StreakBanner({ profile }: Props) {
-  const streak = profile.streak ?? 0;
+export function StreakBanner({ streak: streakInput }: Props) {
+  const streak = streakInput ?? 0;
   const message = getStreakMessage(streak);
 
   return (

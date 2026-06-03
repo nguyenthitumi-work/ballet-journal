@@ -3,6 +3,7 @@ import { getServerSupabase } from '@/lib/supabase/server';
 import { formatLocalDate } from '@/lib/services/streak';
 import { sessionFromRow, attemptFromRow } from '@/lib/types';
 import type {
+  Discipline,
   PracticeSession,
   PracticeSessionRow,
   Rating,
@@ -75,14 +76,17 @@ export async function getSession(
 
 export async function listSessions(
   userId: string,
-  limit = 50,
+  opts: { discipline?: Discipline; limit?: number } = {},
 ): Promise<PracticeSession[]> {
+  const { discipline, limit = 50 } = opts;
   const supabase = await getServerSupabase();
-  const { data, error } = await supabase
+  let query = supabase
     .from('practice_session')
     .select('*')
     .eq('user_id', userId)
-    .not('ended_at', 'is', null)
+    .not('ended_at', 'is', null);
+  if (discipline) query = query.eq('discipline', discipline);
+  const { data, error } = await query
     .order('started_at', { ascending: false })
     .limit(limit);
   if (error) throw new Error(error.message);
@@ -93,6 +97,7 @@ export async function listSessionDaysInMonth(
   userId: string,
   year: number,
   monthIdx: number,
+  discipline?: Discipline,
 ): Promise<Array<{ startedAt: string; durationSeconds: number | null }>> {
   // Pad by one day each side so a session that occurred on the 1st (LA) but
   // is stored as the previous UTC day (or vice versa on the last) is still
@@ -100,13 +105,15 @@ export async function listSessionDaysInMonth(
   const startIso = new Date(Date.UTC(year, monthIdx, 0)).toISOString();
   const endIso = new Date(Date.UTC(year, monthIdx + 1, 2)).toISOString();
   const supabase = await getServerSupabase();
-  const { data, error } = await supabase
+  let query = supabase
     .from('practice_session')
     .select('started_at, duration_seconds')
     .eq('user_id', userId)
     .not('ended_at', 'is', null)
     .gte('started_at', startIso)
     .lt('started_at', endIso);
+  if (discipline) query = query.eq('discipline', discipline);
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   return (data as Array<{ started_at: string; duration_seconds: number | null }>).map(
     (r) => ({ startedAt: r.started_at, durationSeconds: r.duration_seconds }),

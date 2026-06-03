@@ -6,9 +6,8 @@ import { getSessionContext } from '@/lib/session';
 import { endSession, recordSet, startSession } from '@/lib/db/sessions';
 import { createWorkout, getWorkout } from '@/lib/db/workouts';
 import { listExercises } from '@/lib/db/exercises';
-import { getProfile, setStreak } from '@/lib/db/profile';
+import { getDisciplineState, setDisciplineStreak } from '@/lib/db/disciplineProfile';
 import { computeNewStreak, formatLocalDate } from '@/lib/services/streak';
-import { evaluateUnlocks } from '@/lib/db/rewards';
 import { WORKOUT_FOCUS_LABELS, type WorkoutExercise, type WorkoutFocus } from '@/lib/gym/types';
 import type { Level, Rating } from '@/lib/types';
 
@@ -110,22 +109,16 @@ export async function finishWorkoutSession(
     overallNotes.trim().length === 0 ? null : overallNotes.trim(),
   );
 
-  const profile = await getProfile(userId);
-  if (profile) {
-    const todayLocal = formatLocalDate(new Date(), LOCAL_TZ);
-    const { newStreak, updatedLastPracticeDate } = computeNewStreak({
-      currentStreak: profile.streak,
-      lastPracticeDate: profile.lastPracticeDate,
-      todayLocal,
-    });
-    await setStreak(userId, newStreak, updatedLastPracticeDate);
-  }
+  const state = await getDisciplineState(userId, 'gym');
+  const todayLocal = formatLocalDate(new Date(), LOCAL_TZ);
+  const { newStreak, updatedLastPracticeDate } = computeNewStreak({
+    currentStreak: state.streak,
+    lastPracticeDate: state.lastPracticeDate,
+    todayLocal,
+  });
+  await setDisciplineStreak(userId, 'gym', newStreak, updatedLastPracticeDate);
 
-  try {
-    await evaluateUnlocks(userId);
-  } catch (err) {
-    console.error('evaluateUnlocks failed after finishWorkoutSession', err);
-  }
+  // Reward scenes are a ballet feature; gym sessions don't trigger them.
 
   revalidatePath('/');
   revalidatePath('/history');

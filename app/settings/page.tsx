@@ -36,12 +36,29 @@ function Stat({ label, value }: StatProps) {
   );
 }
 
-export default async function SettingsPage() {
+type Discipline = 'ballet' | 'yoga' | 'gym';
+const DISCIPLINE_LABELS: Record<Discipline, string> = {
+  ballet: 'Ballet',
+  yoga: 'Yoga',
+  gym: 'Gym',
+};
+
+function parseDiscipline(value: string | string[] | undefined): Discipline {
+  const v = Array.isArray(value) ? value[0] : value;
+  return v === 'yoga' || v === 'gym' ? v : 'ballet';
+}
+
+export default async function SettingsPage(props: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { userId, profile, onboarded } = await getSessionContext();
 
   if (!onboarded || !isOnboarded(profile)) {
     redirect('/onboarding');
   }
+
+  const sp = await props.searchParams;
+  const discipline = parseDiscipline(sp.d);
 
   const [skills, focusSkills, plans, sessions, videoStats, families, classes] = await Promise.all([
     listSkills(userId),
@@ -49,8 +66,8 @@ export default async function SettingsPage() {
     listPlans(userId),
     listSessions(userId),
     getUserVideoStats(userId),
-    getFamilies(userId),
-    getClasses(userId),
+    getFamilies(userId, discipline),
+    getClasses(userId, discipline),
   ]);
 
   const familyMembersMap: Record<string, any[]> = {};
@@ -154,7 +171,7 @@ export default async function SettingsPage() {
 
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-violet-900">Family</h2>
+          <h2 className="text-lg font-semibold text-violet-900">{DISCIPLINE_LABELS[discipline]} family</h2>
           <a
             href="/settings/accept-code"
             className="text-sm text-violet-700 hover:text-violet-900 underline"
@@ -168,13 +185,14 @@ export default async function SettingsPage() {
             familyMembers={familyMembersMap}
             inviteCodes={familyInviteCodes}
             userId={userId}
+            discipline={discipline}
           />
         </div>
       </section>
 
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-violet-900">Classes</h2>
+          <h2 className="text-lg font-semibold text-violet-900">{DISCIPLINE_LABELS[discipline]} classes</h2>
           <a
             href="/settings/accept-code"
             className="text-sm text-violet-700 hover:text-violet-900 underline"
@@ -183,7 +201,7 @@ export default async function SettingsPage() {
           </a>
         </div>
         <div className={card}>
-          <ClassPanel classes={classes} classMembers={classMembersMap} userId={userId} />
+          <ClassPanel classes={classes} classMembers={classMembersMap} userId={userId} discipline={discipline} />
         </div>
       </section>
 

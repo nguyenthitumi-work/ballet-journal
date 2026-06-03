@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { useEffect, useId, useRef, useState } from 'react';
+import { useActiveDiscipline } from './useActiveDiscipline';
 
 // Switches between disciplines. Ballet lives at the root ("/") and owns all the
 // existing tabs; Yoga lives under "/yoga", Gym under "/gym". Collapsed into a
@@ -15,10 +15,7 @@ const DISCIPLINES = [
 ] as const;
 
 export function DisciplineSwitcher() {
-  const pathname = usePathname();
-  const onYoga = pathname === '/yoga' || pathname.startsWith('/yoga/');
-  const onGym = pathname === '/gym' || pathname.startsWith('/gym/');
-  const currentId: 'ballet' | 'yoga' | 'gym' = onYoga ? 'yoga' : onGym ? 'gym' : 'ballet';
+  const currentId = useActiveDiscipline();
   const current = DISCIPLINES.find((d) => d.id === currentId) ?? DISCIPLINES[0];
 
   const [open, setOpen] = useState(false);

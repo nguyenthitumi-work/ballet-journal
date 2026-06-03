@@ -9,7 +9,7 @@ import {
   listUserVideoPaths,
 } from '@/lib/db/sessions';
 import { isValidDateOfBirth, MIN_AGE, MAX_AGE } from '@/lib/age';
-import type { Level, ClassRole, FamilyRole } from '@/lib/types';
+import type { Level, ClassRole, FamilyRole, Discipline } from '@/lib/types';
 import { isThemeId } from '@/lib/themes';
 import { createFamily, createInvite } from '@/lib/db/families';
 import { createClass, generateClassInviteCode } from '@/lib/db/classes';
@@ -104,9 +104,17 @@ export async function deleteAllVideosForUser(): Promise<{ deleted: number }> {
   return { deleted: paths.length };
 }
 
-export async function createFamilyAction(name: string): Promise<void> {
+const VALID_DISCIPLINES: readonly Discipline[] = ['ballet', 'yoga', 'gym'];
+
+function toDiscipline(value: string | undefined): Discipline {
+  return value && (VALID_DISCIPLINES as readonly string[]).includes(value)
+    ? (value as Discipline)
+    : 'ballet';
+}
+
+export async function createFamilyAction(name: string, discipline?: string): Promise<void> {
   const { userId } = await getSessionContext();
-  await createFamily(userId, name);
+  await createFamily(userId, name, toDiscipline(discipline));
   revalidatePath('/settings');
 }
 
@@ -140,9 +148,9 @@ export async function generateFamilyInviteCodeAction(opts: {
   return { code: invite.code! };
 }
 
-export async function createClassAction(name: string): Promise<void> {
+export async function createClassAction(name: string, discipline?: string): Promise<void> {
   const { userId } = await getSessionContext();
-  await createClass(userId, name);
+  await createClass(userId, name, toDiscipline(discipline));
   revalidatePath('/settings');
 }
 

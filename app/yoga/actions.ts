@@ -10,9 +10,8 @@ import {
 } from '@/lib/db/sessions';
 import { createFlow, getFlow } from '@/lib/db/flows';
 import { listAsanas } from '@/lib/db/asanas';
-import { getProfile, setStreak } from '@/lib/db/profile';
+import { getDisciplineState, setDisciplineStreak } from '@/lib/db/disciplineProfile';
 import { computeNewStreak, formatLocalDate } from '@/lib/services/streak';
-import { evaluateUnlocks } from '@/lib/db/rewards';
 import {
   YOGA_STYLE_LABELS,
   type FlowPose,
@@ -116,22 +115,16 @@ export async function finishFlowSession(
     overallNotes.trim().length === 0 ? null : overallNotes.trim(),
   );
 
-  const profile = await getProfile(userId);
-  if (profile) {
-    const todayLocal = formatLocalDate(new Date(), LOCAL_TZ);
-    const { newStreak, updatedLastPracticeDate } = computeNewStreak({
-      currentStreak: profile.streak,
-      lastPracticeDate: profile.lastPracticeDate,
-      todayLocal,
-    });
-    await setStreak(userId, newStreak, updatedLastPracticeDate);
-  }
+  const state = await getDisciplineState(userId, 'yoga');
+  const todayLocal = formatLocalDate(new Date(), LOCAL_TZ);
+  const { newStreak, updatedLastPracticeDate } = computeNewStreak({
+    currentStreak: state.streak,
+    lastPracticeDate: state.lastPracticeDate,
+    todayLocal,
+  });
+  await setDisciplineStreak(userId, 'yoga', newStreak, updatedLastPracticeDate);
 
-  try {
-    await evaluateUnlocks(userId);
-  } catch (err) {
-    console.error('evaluateUnlocks failed after finishFlowSession', err);
-  }
+  // Reward scenes are a ballet feature; yoga sessions don't trigger them.
 
   revalidatePath('/');
   revalidatePath('/history');

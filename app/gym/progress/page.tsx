@@ -4,6 +4,7 @@ import { getSessionContext } from '@/lib/session';
 import { ensureGymBootstrapped } from '@/lib/gym/bootstrap';
 import { listGymSessions, listExerciseSets } from '@/lib/db/workouts';
 import { listExercises } from '@/lib/db/exercises';
+import { getDisciplineState } from '@/lib/db/disciplineProfile';
 
 const TZ = 'America/Los_Angeles';
 const CARD = 'rounded-2xl border border-violet-200 bg-white p-5 shadow-sm';
@@ -31,14 +32,15 @@ function StatCard({ value, label }: { value: string; label: string }) {
 }
 
 export default async function GymProgressPage() {
-  const { userId, profile, onboarded } = await getSessionContext();
+  const { userId, onboarded } = await getSessionContext();
   if (!onboarded) redirect('/onboarding');
   await ensureGymBootstrapped(userId);
 
-  const [sessions, sets, exercises] = await Promise.all([
+  const [sessions, sets, exercises, state] = await Promise.all([
     listGymSessions(userId),
     listExerciseSets(userId),
     listExercises(userId),
+    getDisciplineState(userId, 'gym'),
   ]);
   const nameById = new Map(exercises.map((e) => [e.id, e.name]));
 
@@ -110,7 +112,7 @@ export default async function GymProgressPage() {
             <StatCard value={String(sessions.length)} label="Workouts" />
             <StatCard value={String(sets.length)} label="Sets logged" />
             <StatCard value={Math.round(totalVolume).toLocaleString()} label="Total volume" />
-            <StatCard value={`${profile.streak}🔥`} label="Day streak" />
+            <StatCard value={`${state.streak}🔥`} label="Day streak" />
           </div>
 
           <div className={`${CARD} flex flex-col gap-3`}>

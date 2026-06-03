@@ -8,16 +8,18 @@ import {
   type ClassMemberRow,
   type ClassRole,
   type ClassRow,
+  type Discipline,
 } from '@/lib/types';
 
 export async function createClass(
   userId: string,
   name: string,
+  discipline: Discipline = 'ballet',
 ): Promise<Class> {
   const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from('class')
-    .insert({ name, owner_id: userId })
+    .insert({ name, owner_id: userId, discipline })
     .select('*')
     .single();
   if (error) throw new Error(error.message);
@@ -29,7 +31,10 @@ export async function createClass(
   return cls;
 }
 
-export async function getClasses(userId: string): Promise<Class[]> {
+export async function getClasses(
+  userId: string,
+  discipline?: Discipline,
+): Promise<Class[]> {
   const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from('class_member')
@@ -40,7 +45,8 @@ export async function getClasses(userId: string): Promise<Class[]> {
   return data
     .map((row) => row.class)
     .filter((c) => c !== null && c !== undefined && !Array.isArray(c))
-    .map((c) => classFromRow(c as unknown as ClassRow));
+    .map((c) => classFromRow(c as unknown as ClassRow))
+    .filter((c) => !discipline || c.discipline === discipline);
 }
 
 export async function getClassMembers(classId: string): Promise<ClassMember[]> {

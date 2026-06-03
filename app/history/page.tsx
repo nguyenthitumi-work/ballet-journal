@@ -11,9 +11,20 @@ import { listAsanas } from '@/lib/db/asanas';
 import { listExercises } from '@/lib/db/exercises';
 import { getNotesForSession } from '@/lib/db/notes';
 import { getProfile } from '@/lib/db/profile';
+import { getDisciplineState } from '@/lib/db/disciplineProfile';
 import { getAuthUserId } from '@/lib/auth';
 import { getViewedDancerId } from '@/lib/viewContext';
-import type { Skill, SkillAttempt, PracticeNote } from '@/lib/types';
+import type { Discipline, Skill, SkillAttempt, PracticeNote } from '@/lib/types';
+
+const DISCIPLINE_LABELS: Record<Discipline, string> = {
+  ballet: 'Ballet',
+  yoga: 'Yoga',
+  gym: 'Gym',
+};
+
+function parseDiscipline(value: string | undefined): Discipline {
+  return value === 'yoga' || value === 'gym' ? value : 'ballet';
+}
 import { StreakBanner } from './_components/StreakBanner';
 import { SessionCard } from './_components/SessionCard';
 import { MonthCalendar, type DayBucket } from './_components/MonthCalendar';
@@ -46,8 +57,10 @@ function buildHref(params: {
   month?: string | null;
   date?: string | null;
   milestones?: boolean;
+  d?: Discipline;
 }): string {
   const sp = new URLSearchParams();
+  if (params.d && params.d !== 'ballet') sp.set('d', params.d);
   if (params.month) sp.set('month', params.month);
   if (params.date) sp.set('date', params.date);
   if (params.milestones) sp.set('milestones', '1');
@@ -65,7 +78,7 @@ function monthKey(year: number, monthIdx: number): string {
 }
 
 export default async function HistoryPage(props: HistoryPageProps) {
-  const { profile, onboarded } = await getSessionContext();
+  const { onboarded } = await getSessionContext();
 
   if (!onboarded) {
     redirect('/onboarding');
@@ -79,6 +92,8 @@ export default async function HistoryPage(props: HistoryPageProps) {
   const milestonesOnly = firstParam(sp.milestones) === '1';
   const dateParam = firstParam(sp.date);
   const monthParam = firstParam(sp.month);
+  const discipline = parseDiscipline(firstParam(sp.d));
+  const streakState = await getDisciplineState(viewedDancerId, discipline);
 
   const now = new Date();
   const todayYmd = ymdInTz(now, TZ);
@@ -106,11 +121,11 @@ export default async function HistoryPage(props: HistoryPageProps) {
     dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : null;
 
   const [sessions, skills, asanas, exercises, monthDays] = await Promise.all([
-    listSessions(viewedDancerId),
+    listSessions(viewedDancerId, { discipline }),
     listSkills(viewedDancerId),
     listAsanas(viewedDancerId),
     listExercises(viewedDancerId),
-    listSessionDaysInMonth(viewedDancerId, calendarYear, calendarMonthIdx),
+    listSessionDaysInMonth(viewedDancerId, calendarYear, calendarMonthIdx, discipline),
   ]);
   const asanasById = new Map(asanas.map((a) => [a.id, { name: a.name }]));
   const exercisesById = new Map(exercises.map((e) => [e.id, { name: e.name }]));
@@ -187,19 +202,19 @@ export default async function HistoryPage(props: HistoryPageProps) {
   const isCurrentMonth =
     calendarYear === currentYear && calendarMonthIdx === currentMonthIdx;
 
-  const prevHref = buildHref({
+  const prevHref = buildHref({ d: discipline,
     month: monthKey(prev.year, prev.monthIdx),
     milestones: milestonesOnly,
   });
-  const nextHref = buildHref({
+  const nextHref = buildHref({ d: discipline,
     month: monthKey(next.year, next.monthIdx),
     milestones: milestonesOnly,
   });
   const todayHref = isCurrentMonth
     ? null
-    : buildHref({ milestones: milestonesOnly });
+    : buildHref({ d: discipline, milestones: milestonesOnly });
   const hrefForDay = (ymd: string) =>
-    buildHref({
+    buildHref({ d: discipline,
       month: monthKey(calendarYear, calendarMonthIdx),
       date: ymd === selectedYmd ? null : ymd,
       milestones: milestonesOnly,
@@ -216,11 +231,11 @@ export default async function HistoryPage(props: HistoryPageProps) {
   return (
     <section className="flex flex-col gap-6">
       <header>
-        <h1 className="text-3xl font-semibold tracking-tight">History</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{DISCIPLINE_LABELS[discipline]} history</h1>
         <p className="text-sm text-violet-900/60">Every practice, big or small.</p>
       </header>
 
-      <StreakBanner profile={profile} />
+      <StreakBanner streak={streakState.streak} />
 
       <MonthCalendar
         year={calendarYear}
@@ -236,14 +251,14 @@ export default async function HistoryPage(props: HistoryPageProps) {
 
       <nav aria-label="Filter history" className="flex flex-wrap gap-2">
         <FilterChip
-          href={buildHref({
+          href={buildHref({ d: discipline,
             month: isCurrentMonth ? null : monthKey(calendarYear, calendarMonthIdx),
           })}
           label="All"
           active={!milestonesOnly && !selectedYmd}
         />
         <FilterChip
-          href={buildHref({
+          href={buildHref({ d: discipline,
             month: isCurrentMonth ? null : monthKey(calendarYear, calendarMonthIdx),
             date: selectedYmd,
             milestones: true,
@@ -253,7 +268,7 @@ export default async function HistoryPage(props: HistoryPageProps) {
         />
         {selectedChipLabel && (
           <Link
-            href={buildHref({
+            href={buildHref({ d: discipline,
               month: isCurrentMonth ? null : monthKey(calendarYear, calendarMonthIdx),
               milestones: milestonesOnly,
             })}

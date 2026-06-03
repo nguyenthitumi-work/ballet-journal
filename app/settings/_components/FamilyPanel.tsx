@@ -9,9 +9,10 @@ interface FamilyPanelProps {
   familyMembers: Record<string, FamilyMember[]>;
   inviteCodes: Record<string, string | null>;
   userId: string;
+  discipline?: string;
 }
 
-export default function FamilyPanel({ families, familyMembers, inviteCodes, userId }: FamilyPanelProps) {
+export default function FamilyPanel({ families, familyMembers, inviteCodes, userId, discipline }: FamilyPanelProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [newFamilyName, setNewFamilyName] = useState('');
   const [selectedRole, setSelectedRole] = useState<Record<string, 'parent' | 'dancer'>>({});
@@ -19,7 +20,7 @@ export default function FamilyPanel({ families, familyMembers, inviteCodes, user
   async function handleCreateFamily(e: React.FormEvent) {
     e.preventDefault();
     if (!newFamilyName.trim()) return;
-    await createFamilyAction(newFamilyName.trim());
+    await createFamilyAction(newFamilyName.trim(), discipline);
     setNewFamilyName('');
     setIsCreating(false);
   }

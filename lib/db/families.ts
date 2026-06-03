@@ -4,6 +4,7 @@ import {
   familyFromRow,
   familyMemberFromRow,
   inviteFromRow,
+  type Discipline,
   type Family,
   type FamilyMember,
   type FamilyMemberRow,
@@ -16,11 +17,12 @@ import {
 export async function createFamily(
   userId: string,
   name: string,
+  discipline: Discipline = 'ballet',
 ): Promise<Family> {
   const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from('family')
-    .insert({ name, created_by: userId })
+    .insert({ name, created_by: userId, discipline })
     .select('*')
     .single();
   if (error) throw new Error(`Failed to create family: ${error.message}`);
@@ -38,7 +40,10 @@ export async function createFamily(
   return family;
 }
 
-export async function getFamilies(userId: string): Promise<Family[]> {
+export async function getFamilies(
+  userId: string,
+  discipline?: Discipline,
+): Promise<Family[]> {
   const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from('family_member')
@@ -49,7 +54,8 @@ export async function getFamilies(userId: string): Promise<Family[]> {
   return data
     .map((row) => row.family)
     .filter((f) => f !== null && f !== undefined && !Array.isArray(f))
-    .map((f) => familyFromRow(f as unknown as FamilyRow));
+    .map((f) => familyFromRow(f as unknown as FamilyRow))
+    .filter((f) => !discipline || f.discipline === discipline);
 }
 
 export async function getFamilyMembers(

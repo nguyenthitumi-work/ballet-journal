@@ -4,6 +4,7 @@ import { getSessionContext } from '@/lib/session';
 import { ensureYogaBootstrapped } from '@/lib/yoga/bootstrap';
 import { listYogaSessions, listAsanaAttempts } from '@/lib/db/flows';
 import { listAsanas } from '@/lib/db/asanas';
+import { getDisciplineState } from '@/lib/db/disciplineProfile';
 
 const TZ = 'America/Los_Angeles';
 const CARD = 'rounded-2xl border border-violet-200 bg-white p-5 shadow-sm';
@@ -31,14 +32,15 @@ function StatCard({ value, label }: { value: string; label: string }) {
 }
 
 export default async function YogaProgressPage() {
-  const { userId, profile, onboarded } = await getSessionContext();
+  const { userId, onboarded } = await getSessionContext();
   if (!onboarded) redirect('/onboarding');
   await ensureYogaBootstrapped(userId);
 
-  const [sessions, attempts, asanas] = await Promise.all([
+  const [sessions, attempts, asanas, state] = await Promise.all([
     listYogaSessions(userId),
     listAsanaAttempts(userId),
     listAsanas(userId),
+    getDisciplineState(userId, 'yoga'),
   ]);
   const nameById = new Map(asanas.map((a) => [a.id, a.name]));
 
@@ -108,7 +110,7 @@ export default async function YogaProgressPage() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <StatCard value={String(sessions.length)} label="Flows completed" />
             <StatCard value={`${totalMinutes}`} label="Total minutes" />
-            <StatCard value={`${profile.streak}🔥`} label="Day streak" />
+            <StatCard value={`${state.streak}🔥`} label="Day streak" />
           </div>
 
           <div className={`${CARD} flex flex-col gap-3`}>
