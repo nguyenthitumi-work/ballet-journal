@@ -1,7 +1,7 @@
 import 'server-only';
 import { getServerSupabase } from '@/lib/supabase/server';
-import { listSkills } from '@/lib/db/skills';
-import type { WeeklySummary } from '@/lib/types';
+import { SUBJECT_CONFIG, listSubjectCatalog } from '@/lib/services/disciplineSubject';
+import type { Discipline, WeeklySummary } from '@/lib/types';
 
 const WEEK_MS = 7 * 86_400_000;
 const MIN_ATTEMPTS_FOR_IMPROVED = 2;
@@ -12,11 +12,11 @@ interface SessionWindowRow {
 }
 
 interface AttemptWindowRow {
-  skill_id: string;
   attempted_at: string;
   rating: number;
   duration_seconds: number;
   is_milestone: boolean;
+  [key: string]: string | number | boolean | null;
 }
 
 interface MasteredRow {
@@ -24,41 +24,53 @@ interface MasteredRow {
   progress_status_changed_at: string;
 }
 
+// Weekly recap for a single discipline. Ballet (the default) keeps its original
+// behavior: skill-backed attempts and "mastered this week" from the skill
+// table's progress_status_changed_at. Yoga/gym key off asana_id/exercise_id and
+// omit "mastered this week" (those catalogs have no mastery timestamp).
 export async function getWeeklySummary(
   userId: string,
   now: Date,
+  discipline: Discipline = 'ballet',
 ): Promise<WeeklySummary> {
+  const cfg = SUBJECT_CONFIG[discipline];
+  const idColumn = cfg.idColumn;
   const endIso = now.toISOString();
   const startIso = new Date(now.getTime() - WEEK_MS).toISOString();
   const priorStartIso = new Date(now.getTime() - 2 * WEEK_MS).toISOString();
 
   const supabase = await getServerSupabase();
 
+  // Mastered-this-week only exists for ballet (skill.progress_status_changed_at).
+  const masteredQuery = cfg.hasMasteryTimestamp
+    ? supabase
+        .from('skill')
+        .select('id, progress_status_changed_at')
+        .eq('user_id', userId)
+        .eq('progress_status', 'mastered')
+        .gte('progress_status_changed_at', startIso)
+        .lt('progress_status_changed_at', endIso)
+    : Promise.resolve({ data: [], error: null });
+
   // Pull both weeks in one query each; bucket in app.
-  const [sessionsRes, attemptsRes, masteredRes, skills] = await Promise.all([
+  const [sessionsRes, attemptsRes, masteredRes, catalog] = await Promise.all([
     supabase
       .from('practice_session')
       .select('started_at, duration_seconds')
       .eq('user_id', userId)
-      .eq('discipline', 'ballet')
+      .eq('discipline', discipline)
       .not('ended_at', 'is', null)
       .gte('started_at', priorStartIso)
       .lt('started_at', endIso),
     supabase
       .from('skill_attempt')
-      .select('skill_id, attempted_at, rating, duration_seconds, is_milestone')
+      .select(`${idColumn}, attempted_at, rating, duration_seconds, is_milestone`)
       .eq('user_id', userId)
-      .not('skill_id', 'is', null)
+      .not(idColumn, 'is', null)
       .gte('attempted_at', priorStartIso)
       .lt('attempted_at', endIso),
-    supabase
-      .from('skill')
-      .select('id, progress_status_changed_at')
-      .eq('user_id', userId)
-      .eq('progress_status', 'mastered')
-      .gte('progress_status_changed_at', startIso)
-      .lt('progress_status_changed_at', endIso),
-    listSkills(userId),
+    masteredQuery,
+    listSubjectCatalog(userId, discipline),
   ]);
 
   if (sessionsRes.error) throw new Error(sessionsRes.error.message);
@@ -68,7 +80,7 @@ export async function getWeeklySummary(
   const sessions = (sessionsRes.data ?? []) as SessionWindowRow[];
   const attempts = (attemptsRes.data ?? []) as AttemptWindowRow[];
   const mastered = (masteredRes.data ?? []) as MasteredRow[];
-  const skillNameById = new Map(skills.map((s) => [s.id, s.name]));
+  const skillNameById = new Map(catalog.map((s) => [s.id, s.name]));
 
   // Sessions: split current vs prior.
   let practiceTimeSec = 0;
@@ -96,12 +108,14 @@ export async function getWeeklySummary(
   const prior = new Map<string, PerSkill>();
   let milestonesCount = 0;
   for (const a of attempts) {
+    const subjectId = a[idColumn] as string | null;
+    if (!subjectId) continue;
     const target = a.attempted_at >= startIso ? current : prior;
-    const bucket = target.get(a.skill_id) ?? { totalSec: 0, ratingSum: 0, count: 0 };
+    const bucket = target.get(subjectId) ?? { totalSec: 0, ratingSum: 0, count: 0 };
     bucket.totalSec += a.duration_seconds;
     bucket.ratingSum += a.rating;
     bucket.count += 1;
-    target.set(a.skill_id, bucket);
+    target.set(subjectId, bucket);
     if (a.attempted_at >= startIso && a.is_milestone) milestonesCount += 1;
   }
 

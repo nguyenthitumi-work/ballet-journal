@@ -4,6 +4,15 @@ import { getSessionContext } from '@/lib/session';
 import { ensureGymBootstrapped } from '@/lib/gym/bootstrap';
 import { listExercises } from '@/lib/db/exercises';
 import { listWorkouts } from '@/lib/db/workouts';
+import { getDisciplineState } from '@/lib/db/disciplineProfile';
+import { countDistinctSkillsToday } from '@/lib/db/sessions';
+import { getWeeklySummary } from '@/lib/services/weeklySummary';
+import { listUnlockedSceneIds } from '@/lib/db/rewards';
+import { SUBJECT_CONFIG } from '@/lib/services/disciplineSubject';
+import { StreakCard } from '@/components/home/StreakCard';
+import { TodaysGoalCard } from '@/components/home/TodaysGoalCard';
+import { WeeklySummaryCard } from '@/components/home/WeeklySummaryCard';
+import { JourneyCard } from '@/components/home/JourneyCard';
 import { pickTodaysWorkout } from '@/lib/gym/suggestion';
 import { localDayOfWeek } from '@/lib/services/suggestion';
 import {
@@ -73,7 +82,14 @@ export default async function GymHomePage() {
   const { userId, onboarded } = await getSessionContext();
   if (!onboarded) redirect('/onboarding');
   await ensureGymBootstrapped(userId);
-  const [exercises, workouts] = await Promise.all([listExercises(userId), listWorkouts(userId)]);
+  const [exercises, workouts, state, todaysCount, weekly, unlockedSceneIds] = await Promise.all([
+    listExercises(userId),
+    listWorkouts(userId),
+    getDisciplineState(userId, 'gym'),
+    countDistinctSkillsToday(userId, LOCAL_TZ, 'gym'),
+    getWeeklySummary(userId, new Date(), 'gym'),
+    listUnlockedSceneIds(userId, 'gym'),
+  ]);
   const todaysWorkout = pickTodaysWorkout(workouts, localDayOfWeek(new Date(), LOCAL_TZ));
 
   const byCategory = new Map<ExerciseCategory, Exercise[]>();
@@ -106,6 +122,15 @@ export default async function GymHomePage() {
           </Link>
         </nav>
       </header>
+
+      <StreakCard streak={state.streak} />
+      <WeeklySummaryCard summary={weekly} href="/gym/summary" />
+      <TodaysGoalCard
+        todaysCount={todaysCount}
+        goal={state.dailyGoal}
+        unit={SUBJECT_CONFIG.gym.unit}
+        unitPlural={SUBJECT_CONFIG.gym.unitPlural}
+      />
 
       {todaysWorkout ? (
         <form action={startWorkout.bind(null, todaysWorkout.id)}>
@@ -162,6 +187,8 @@ export default async function GymHomePage() {
           </section>
         ))
       )}
+
+      <JourneyCard unlockedSceneIds={unlockedSceneIds} href="/gym/rewards" />
     </section>
   );
 }

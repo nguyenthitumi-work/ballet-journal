@@ -33,8 +33,9 @@ const PRIMARY_TABS: Record<Discipline, readonly Tab[]> = {
   ],
 };
 
-// "More" menu per discipline. Milestones/Badges/Summary are ballet features;
-// yoga/gym keep just Guide + Settings (MoreMenu appends Sign out).
+// "More" menu per discipline. Each discipline gets its own Milestones/Badges/
+// Summary routes; Guide is shared and Settings is discipline-scoped via ?d
+// (MoreMenu appends Sign out).
 const MORE_ITEMS: Record<Discipline, readonly Tab[]> = {
   ballet: [
     { href: '/milestones', label: 'Milestones' },
@@ -44,10 +45,16 @@ const MORE_ITEMS: Record<Discipline, readonly Tab[]> = {
     { href: '/settings', label: 'Settings' },
   ],
   yoga: [
+    { href: '/yoga/milestones', label: 'Milestones' },
+    { href: '/yoga/badges', label: 'Badges' },
+    { href: '/yoga/summary', label: 'Summary' },
     { href: '/guide', label: 'Guide' },
     { href: '/settings?d=yoga', label: 'Settings' },
   ],
   gym: [
+    { href: '/gym/milestones', label: 'Milestones' },
+    { href: '/gym/badges', label: 'Badges' },
+    { href: '/gym/summary', label: 'Summary' },
     { href: '/guide', label: 'Guide' },
     { href: '/settings?d=gym', label: 'Settings' },
   ],

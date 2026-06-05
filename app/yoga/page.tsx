@@ -4,6 +4,15 @@ import { getSessionContext } from '@/lib/session';
 import { ensureYogaBootstrapped } from '@/lib/yoga/bootstrap';
 import { listAsanas } from '@/lib/db/asanas';
 import { listFlows } from '@/lib/db/flows';
+import { getDisciplineState } from '@/lib/db/disciplineProfile';
+import { countDistinctSkillsToday } from '@/lib/db/sessions';
+import { getWeeklySummary } from '@/lib/services/weeklySummary';
+import { listUnlockedSceneIds } from '@/lib/db/rewards';
+import { SUBJECT_CONFIG } from '@/lib/services/disciplineSubject';
+import { StreakCard } from '@/components/home/StreakCard';
+import { TodaysGoalCard } from '@/components/home/TodaysGoalCard';
+import { WeeklySummaryCard } from '@/components/home/WeeklySummaryCard';
+import { JourneyCard } from '@/components/home/JourneyCard';
 import { pickTodaysFlow } from '@/lib/yoga/suggestion';
 import { localDayOfWeek } from '@/lib/services/suggestion';
 import {
@@ -85,7 +94,14 @@ export default async function YogaHomePage() {
   const { userId, onboarded } = await getSessionContext();
   if (!onboarded) redirect('/onboarding');
   await ensureYogaBootstrapped(userId);
-  const [asanas, flows] = await Promise.all([listAsanas(userId), listFlows(userId)]);
+  const [asanas, flows, state, todaysCount, weekly, unlockedSceneIds] = await Promise.all([
+    listAsanas(userId),
+    listFlows(userId),
+    getDisciplineState(userId, 'yoga'),
+    countDistinctSkillsToday(userId, LOCAL_TZ, 'yoga'),
+    getWeeklySummary(userId, new Date(), 'yoga'),
+    listUnlockedSceneIds(userId, 'yoga'),
+  ]);
   const todaysFlow = pickTodaysFlow(flows, localDayOfWeek(new Date(), LOCAL_TZ));
 
   const byCategory = new Map<AsanaCategory, Asana[]>();
@@ -118,6 +134,15 @@ export default async function YogaHomePage() {
           </Link>
         </nav>
       </header>
+
+      <StreakCard streak={state.streak} />
+      <WeeklySummaryCard summary={weekly} href="/yoga/summary" />
+      <TodaysGoalCard
+        todaysCount={todaysCount}
+        goal={state.dailyGoal}
+        unit={SUBJECT_CONFIG.yoga.unit}
+        unitPlural={SUBJECT_CONFIG.yoga.unitPlural}
+      />
 
       {todaysFlow ? (
         <form action={startFlow.bind(null, todaysFlow.id)}>
@@ -174,6 +199,8 @@ export default async function YogaHomePage() {
           </section>
         ))
       )}
+
+      <JourneyCard unlockedSceneIds={unlockedSceneIds} href="/yoga/rewards" />
     </section>
   );
 }

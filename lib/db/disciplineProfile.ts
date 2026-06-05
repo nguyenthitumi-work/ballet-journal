@@ -7,18 +7,23 @@ export interface DisciplineState {
   level: Level;
   streak: number;
   lastPracticeDate: string | null;
+  dailyGoal: number;
 }
+
+const DEFAULT_DAILY_GOAL = 3;
 
 const DEFAULT_STATE: DisciplineState = {
   level: 'Beginner',
   streak: 0,
   lastPracticeDate: null,
+  dailyGoal: DEFAULT_DAILY_GOAL,
 };
 
 interface DisciplineProfileRow {
   level: Level;
   streak: number;
   last_practice_date: string | null;
+  daily_goal: number | null;
 }
 
 // Per-discipline streak/level. Ballet reads from the original user_profile (so
@@ -35,6 +40,7 @@ export async function getDisciplineState(
       level: profile.level,
       streak: profile.streak,
       lastPracticeDate: profile.lastPracticeDate,
+      dailyGoal: profile.dailySkillGoal,
     };
   }
 
@@ -45,7 +51,7 @@ export async function getDisciplineState(
 
   const { data, error } = await supabase
     .from('discipline_profile')
-    .select('level, streak, last_practice_date')
+    .select('level, streak, last_practice_date, daily_goal')
     .eq('user_id', userId)
     .eq('discipline', discipline)
     .maybeSingle();
@@ -56,6 +62,7 @@ export async function getDisciplineState(
     level: row.level,
     streak: row.streak,
     lastPracticeDate: row.last_practice_date,
+    dailyGoal: row.daily_goal ?? DEFAULT_DAILY_GOAL,
   };
 }
 

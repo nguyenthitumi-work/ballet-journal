@@ -1,6 +1,9 @@
 import 'server-only';
 import { getServerSupabase } from '@/lib/supabase/server';
+import { getDisciplineState } from '@/lib/db/disciplineProfile';
+import { SUBJECT_CONFIG, listSubjectCatalog } from '@/lib/services/disciplineSubject';
 import { scenesUnlockedBy, type RewardState } from '@/lib/services/rewards';
+import type { Discipline } from '@/lib/types';
 
 export interface UserReward {
   userId: string;
@@ -18,61 +21,88 @@ interface UserRewardRow {
   revealed_at: string | null;
 }
 
-const userRewardFromRow = (r: UserRewardRow): UserReward => ({
+// The reward catalog is reused across disciplines, so a scene's stored id is
+// namespaced per non-ballet discipline to keep each board's unlock state
+// separate in the shared user_reward table. Ballet keeps bare ids
+// ("swan-lake-01") for backward compatibility with existing rows.
+function storedSceneId(sceneId: string, discipline: Discipline): string {
+  return discipline === 'ballet' ? sceneId : `${discipline}:${sceneId}`;
+}
+
+function belongsToDiscipline(storedId: string, discipline: Discipline): boolean {
+  const isYoga = storedId.startsWith('yoga:');
+  const isGym = storedId.startsWith('gym:');
+  if (discipline === 'yoga') return isYoga;
+  if (discipline === 'gym') return isGym;
+  return !isYoga && !isGym; // ballet = bare
+}
+
+function canonicalSceneId(storedId: string, discipline: Discipline): string {
+  return discipline === 'ballet' ? storedId : storedId.slice(`${discipline}:`.length);
+}
+
+const userRewardFromRow = (r: UserRewardRow, discipline: Discipline): UserReward => ({
   userId: r.user_id,
-  sceneId: r.scene_id,
+  sceneId: canonicalSceneId(r.scene_id, discipline),
   unlockedAt: r.unlocked_at,
   revealQueuedAt: r.reveal_queued_at,
   revealedAt: r.revealed_at,
 });
 
-async function fetchRewardState(userId: string): Promise<RewardState> {
+async function fetchRewardState(
+  userId: string,
+  discipline: Discipline,
+): Promise<RewardState> {
+  const cfg = SUBJECT_CONFIG[discipline];
   const supabase = await getServerSupabase();
-  // Parallel: four small count queries instead of one wide read.
-  const [sessions, mastered, milestones, profile] = await Promise.all([
+  // All counts are scoped to the discipline so each board reflects only its own
+  // practice. Mastery comes from the subject catalog (asanas/exercises also
+  // carry progress_status); streak comes from the per-discipline state.
+  const [sessions, milestones, state, catalog] = await Promise.all([
     supabase
       .from('practice_session')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId)
+      .eq('discipline', discipline)
       .not('ended_at', 'is', null),
-    supabase
-      .from('skill')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('progress_status', 'mastered'),
     supabase
       .from('skill_attempt')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId)
-      .eq('is_milestone', true),
-    supabase
-      .from('user_profile')
-      .select('streak')
-      .eq('user_id', userId)
-      .maybeSingle(),
+      .eq('is_milestone', true)
+      .not(cfg.idColumn, 'is', null),
+    getDisciplineState(userId, discipline),
+    listSubjectCatalog(userId, discipline),
   ]);
 
   if (sessions.error) throw new Error(sessions.error.message);
-  if (mastered.error) throw new Error(mastered.error.message);
   if (milestones.error) throw new Error(milestones.error.message);
-  if (profile.error) throw new Error(profile.error.message);
 
   return {
     completedSessionCount: sessions.count ?? 0,
-    masteredSkillCount: mastered.count ?? 0,
+    masteredSkillCount: catalog.filter((c) => c.progressStatus === 'mastered').length,
     milestoneCount: milestones.count ?? 0,
-    streak: (profile.data as { streak: number } | null)?.streak ?? 0,
+    streak: state.streak,
   };
 }
 
-export async function listUnlockedSceneIds(userId: string): Promise<Set<string>> {
+export async function listUnlockedSceneIds(
+  userId: string,
+  discipline: Discipline = 'ballet',
+): Promise<Set<string>> {
   const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from('user_reward')
     .select('scene_id')
     .eq('user_id', userId);
   if (error) throw new Error(error.message);
-  return new Set((data as { scene_id: string }[]).map((r) => r.scene_id));
+  const set = new Set<string>();
+  for (const r of data as { scene_id: string }[]) {
+    if (belongsToDiscipline(r.scene_id, discipline)) {
+      set.add(canonicalSceneId(r.scene_id, discipline));
+    }
+  }
+  return set;
 }
 
 // Diffs the user's current state against already-unlocked scenes and inserts
@@ -85,13 +115,14 @@ export async function listUnlockedSceneIds(userId: string): Promise<Set<string>>
 // only future unlocks trigger the reveal animation.
 export async function evaluateUnlocks(
   userId: string,
+  discipline: Discipline = 'ballet',
   opts: { silent?: boolean } = {},
 ): Promise<string[]> {
   const silent = opts.silent === true;
 
-  const state = await fetchRewardState(userId);
+  const state = await fetchRewardState(userId, discipline);
   const eligible = new Set(scenesUnlockedBy(state));
-  const already = await listUnlockedSceneIds(userId);
+  const already = await listUnlockedSceneIds(userId, discipline);
   const newSceneIds = [...eligible].filter((id) => !already.has(id)).sort();
 
   if (newSceneIds.length === 0) return [];
@@ -99,7 +130,7 @@ export async function evaluateUnlocks(
   const now = new Date().toISOString();
   const rows = newSceneIds.map((scene_id) => ({
     user_id: userId,
-    scene_id,
+    scene_id: storedSceneId(scene_id, discipline),
     unlocked_at: now,
     reveal_queued_at: silent ? null : now,
     revealed_at: silent ? now : null,
@@ -133,7 +164,7 @@ export async function nextQueuedReveal(userId: string): Promise<UserReward | nul
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) return null;
-  return userRewardFromRow(data as UserRewardRow);
+  return userRewardFromRow(data as UserRewardRow, 'ballet');
 }
 
 export async function markRevealed(userId: string, sceneId: string): Promise<void> {
@@ -146,12 +177,17 @@ export async function markRevealed(userId: string, sceneId: string): Promise<voi
   if (error) throw new Error(error.message);
 }
 
-export async function listUserRewards(userId: string): Promise<UserReward[]> {
+export async function listUserRewards(
+  userId: string,
+  discipline: Discipline = 'ballet',
+): Promise<UserReward[]> {
   const supabase = await getServerSupabase();
   const { data, error } = await supabase
     .from('user_reward')
     .select('*')
     .eq('user_id', userId);
   if (error) throw new Error(error.message);
-  return (data as UserRewardRow[]).map(userRewardFromRow);
+  return (data as UserRewardRow[])
+    .filter((r) => belongsToDiscipline(r.scene_id, discipline))
+    .map((r) => userRewardFromRow(r, discipline));
 }

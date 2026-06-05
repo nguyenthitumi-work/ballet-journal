@@ -10,6 +10,7 @@ import {
 } from '@/lib/db/sessions';
 import { createFlow, getFlow } from '@/lib/db/flows';
 import { listAsanas } from '@/lib/db/asanas';
+import { evaluateUnlocks } from '@/lib/db/rewards';
 import { getDisciplineState, setDisciplineStreak } from '@/lib/db/disciplineProfile';
 import { computeNewStreak, formatLocalDate } from '@/lib/services/streak';
 import {
@@ -124,9 +125,17 @@ export async function finishFlowSession(
   });
   await setDisciplineStreak(userId, 'yoga', newStreak, updatedLastPracticeDate);
 
-  // Reward scenes are a ballet feature; yoga sessions don't trigger them.
+  // Fill the yoga reward board for newly-crossed thresholds. Silent (no reveal
+  // animation yet for yoga); best-effort so a reward hiccup never blocks the
+  // session from closing.
+  try {
+    await evaluateUnlocks(userId, 'yoga', { silent: true });
+  } catch (err) {
+    console.error('evaluateUnlocks failed after finishFlowSession', err);
+  }
 
   revalidatePath('/');
+  revalidatePath('/yoga');
   revalidatePath('/history');
   redirect('/history');
 }

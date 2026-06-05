@@ -92,7 +92,7 @@ async function maybeBackfillRewards(userId: string): Promise<void> {
   }
 
   try {
-    await evaluateUnlocks(userId, { silent: true });
+    await evaluateUnlocks(userId, 'ballet', { silent: true });
     await markRewardsBackfilled(userId);
   } catch (err) {
     // Non-critical — the user just won't see retroactive unlocks until the

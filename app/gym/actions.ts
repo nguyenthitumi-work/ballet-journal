@@ -6,6 +6,7 @@ import { getSessionContext } from '@/lib/session';
 import { endSession, recordSet, startSession } from '@/lib/db/sessions';
 import { createWorkout, getWorkout } from '@/lib/db/workouts';
 import { listExercises } from '@/lib/db/exercises';
+import { evaluateUnlocks } from '@/lib/db/rewards';
 import { getDisciplineState, setDisciplineStreak } from '@/lib/db/disciplineProfile';
 import { computeNewStreak, formatLocalDate } from '@/lib/services/streak';
 import { WORKOUT_FOCUS_LABELS, type WorkoutExercise, type WorkoutFocus } from '@/lib/gym/types';
@@ -118,9 +119,17 @@ export async function finishWorkoutSession(
   });
   await setDisciplineStreak(userId, 'gym', newStreak, updatedLastPracticeDate);
 
-  // Reward scenes are a ballet feature; gym sessions don't trigger them.
+  // Fill the gym reward board for newly-crossed thresholds. Silent (no reveal
+  // animation yet for gym); best-effort so a reward hiccup never blocks the
+  // session from closing.
+  try {
+    await evaluateUnlocks(userId, 'gym', { silent: true });
+  } catch (err) {
+    console.error('evaluateUnlocks failed after finishWorkoutSession', err);
+  }
 
   revalidatePath('/');
+  revalidatePath('/gym');
   revalidatePath('/history');
   redirect('/history');
 }
