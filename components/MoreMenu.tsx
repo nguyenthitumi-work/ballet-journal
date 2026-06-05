@@ -62,7 +62,7 @@ export function MoreMenu({ items, email }: MoreMenuProps) {
         <div
           id={panelId}
           role="menu"
-          className="absolute right-0 bottom-full mb-2 w-44 overflow-hidden rounded-xl border border-violet-100 bg-white shadow-lg sm:top-full sm:bottom-auto sm:mt-2 sm:mb-0"
+          className="absolute right-0 top-full mt-2 w-44 overflow-hidden rounded-xl border border-violet-100 bg-white shadow-lg"
         >
           <ul className="flex flex-col py-1">
             {items.map((item) => (
