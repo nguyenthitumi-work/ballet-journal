@@ -14,6 +14,20 @@ export async function listAsanas(userId: string): Promise<Asana[]> {
   return (data as AsanaRow[]).map(asanaFromRow);
 }
 
+export async function setReferenceUrl(
+  userId: string,
+  asanaId: string,
+  referenceUrl: string | null,
+): Promise<void> {
+  const supabase = await getServerSupabase();
+  const { error } = await supabase
+    .from('asana')
+    .update({ reference_url: referenceUrl })
+    .eq('user_id', userId)
+    .eq('id', asanaId);
+  if (error) throw new Error(error.message);
+}
+
 export async function getAsana(userId: string, asanaId: string): Promise<Asana | null> {
   const supabase = await getServerSupabase();
   const { data, error } = await supabase

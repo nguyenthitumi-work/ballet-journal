@@ -42,6 +42,12 @@ export function youtubeSearchUrl(query: string): string {
   return `https://www.youtube.com/results?${params.toString()}`;
 }
 
+/** Discipline-agnostic YouTube search link — caller supplies the full query. */
+export function youtubeSearchUrlFor(query: string): string {
+  const params = new URLSearchParams({ search_query: query });
+  return `https://www.youtube.com/results?${params.toString()}`;
+}
+
 interface YouTubeSearchResponse {
   items?: { id?: { videoId?: string } }[];
 }

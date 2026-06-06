@@ -77,6 +77,7 @@ export default async function YogaPlayPage(props: {
         side: p.side,
         holdSeconds: p.holdSeconds,
         breathCue: p.breathCue,
+        referenceUrl: asana.referenceUrl,
       };
     })
     .filter((s): s is PlayerStep => s !== null);

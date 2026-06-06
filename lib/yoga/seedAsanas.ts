@@ -22,7 +22,7 @@ export const SEED_ASANAS: Asana[] = [
     level: 'Beginner',
     defaultHoldSeconds: 30,
     contraindications: ['Low blood pressure (rise slowly)'],
-    referenceUrl: null,
+    referenceUrl: 'https://www.youtube.com/watch?v=ATLU-XX_lro',
   },
   {
     id: 'downward-dog',
@@ -42,7 +42,7 @@ export const SEED_ASANAS: Asana[] = [
     level: 'Beginner',
     defaultHoldSeconds: 45,
     contraindications: ['Wrist injury', 'Late-term pregnancy'],
-    referenceUrl: null,
+    referenceUrl: 'https://www.youtube.com/watch?v=EYuJRSf0JaM',
   },
   {
     id: 'warrior-1',
@@ -62,7 +62,7 @@ export const SEED_ASANAS: Asana[] = [
     level: 'Beginner',
     defaultHoldSeconds: 30,
     contraindications: ['Knee injury', 'High blood pressure (lower arms)'],
-    referenceUrl: null,
+    referenceUrl: 'https://www.youtube.com/watch?v=k4qaVoAbeHM',
   },
   {
     id: 'warrior-2',
@@ -82,7 +82,7 @@ export const SEED_ASANAS: Asana[] = [
     level: 'Beginner',
     defaultHoldSeconds: 30,
     contraindications: ['Knee injury', 'Hip injury'],
-    referenceUrl: null,
+    referenceUrl: 'https://www.youtube.com/watch?v=hmZxKCXS0tY',
   },
   {
     id: 'tree',
@@ -102,7 +102,7 @@ export const SEED_ASANAS: Asana[] = [
     level: 'Beginner',
     defaultHoldSeconds: 30,
     contraindications: ['Low blood pressure', 'Acute ankle injury'],
-    referenceUrl: null,
+    referenceUrl: 'https://www.youtube.com/watch?v=wdln9qWYloU',
   },
   {
     id: 'chair',
@@ -122,7 +122,7 @@ export const SEED_ASANAS: Asana[] = [
     level: 'Beginner',
     defaultHoldSeconds: 30,
     contraindications: ['Knee injury', 'Low blood pressure'],
-    referenceUrl: null,
+    referenceUrl: 'https://www.youtube.com/watch?v=ZDPMdCSy4jQ',
   },
   {
     id: 'cobra',
@@ -142,7 +142,7 @@ export const SEED_ASANAS: Asana[] = [
     level: 'Beginner',
     defaultHoldSeconds: 20,
     contraindications: ['Back injury', 'Pregnancy', 'Carpal tunnel syndrome'],
-    referenceUrl: null,
+    referenceUrl: 'https://www.youtube.com/watch?v=FCEhHyu7H_w',
   },
   {
     id: 'childs-pose',
@@ -162,7 +162,7 @@ export const SEED_ASANAS: Asana[] = [
     level: 'Beginner',
     defaultHoldSeconds: 60,
     contraindications: ['Knee injury', 'Pregnancy (knees wide)'],
-    referenceUrl: null,
+    referenceUrl: 'https://www.youtube.com/watch?v=l-mtV34Afok',
   },
   {
     id: 'seated-forward-fold',
@@ -182,7 +182,7 @@ export const SEED_ASANAS: Asana[] = [
     level: 'Intermediate',
     defaultHoldSeconds: 45,
     contraindications: ['Lower-back injury', 'Sciatica'],
-    referenceUrl: null,
+    referenceUrl: 'https://www.youtube.com/watch?v=4VLYUCml5sw',
   },
   {
     id: 'bridge',
@@ -202,7 +202,7 @@ export const SEED_ASANAS: Asana[] = [
     level: 'Beginner',
     defaultHoldSeconds: 30,
     contraindications: ['Neck injury'],
-    referenceUrl: null,
+    referenceUrl: 'https://www.youtube.com/watch?v=6HYNo1YQsUk',
   },
   {
     id: 'twist-supine',
@@ -222,7 +222,7 @@ export const SEED_ASANAS: Asana[] = [
     level: 'Beginner',
     defaultHoldSeconds: 45,
     contraindications: ['Recent abdominal or spinal surgery'],
-    referenceUrl: null,
+    referenceUrl: 'https://www.youtube.com/watch?v=ezyMaQEaVaI',
   },
   {
     id: 'corpse',
@@ -242,7 +242,7 @@ export const SEED_ASANAS: Asana[] = [
     level: 'Beginner',
     defaultHoldSeconds: 120,
     contraindications: ['Late-term pregnancy (lie on side instead)'],
-    referenceUrl: null,
+    referenceUrl: 'https://www.youtube.com/watch?v=ocnRmfbFV9E',
   },
 ];
 

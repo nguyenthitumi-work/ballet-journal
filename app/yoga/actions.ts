@@ -9,7 +9,8 @@ import {
   startSession,
 } from '@/lib/db/sessions';
 import { createFlow, getFlow } from '@/lib/db/flows';
-import { listAsanas } from '@/lib/db/asanas';
+import { listAsanas, setReferenceUrl } from '@/lib/db/asanas';
+import { parseYouTubeId } from '@/lib/youtube';
 import { evaluateUnlocks } from '@/lib/db/rewards';
 import { getDisciplineState, setDisciplineStreak } from '@/lib/db/disciplineProfile';
 import { computeNewStreak, formatLocalDate } from '@/lib/services/streak';
@@ -26,6 +27,22 @@ const VALID_RATINGS: readonly Rating[] = [1, 2, 3, 4, 5];
 
 function isRating(value: number): value is Rating {
   return (VALID_RATINGS as readonly number[]).includes(value);
+}
+
+// Set (or clear) the reference video for a pose. Mirrors the ballet skill
+// action: validate the YouTube link up front so a bad URL never reaches the DB.
+export async function updateAsanaReferenceUrl(
+  asanaId: string,
+  url: string | null,
+): Promise<void> {
+  const { userId } = await getSessionContext();
+  if (url !== null && parseYouTubeId(url) === null) {
+    throw new Error(
+      'That doesn’t look like a YouTube link. Use a youtube.com or youtu.be URL.',
+    );
+  }
+  await setReferenceUrl(userId, asanaId, url);
+  revalidatePath('/yoga');
 }
 
 // Start a guided flow: create a yoga-tagged practice_session linked to the flow,

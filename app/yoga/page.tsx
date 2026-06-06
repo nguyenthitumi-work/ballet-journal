@@ -23,6 +23,8 @@ import {
   type AsanaCategory,
 } from '@/lib/yoga/types';
 import type { Level } from '@/lib/types';
+import { parseYouTubeId, toEmbedUrl, youtubeSearchUrlFor } from '@/lib/youtube';
+import { AsanaReferenceUrlForm } from './_components/AsanaReferenceUrlForm';
 import { startFlow } from './actions';
 
 const LOCAL_TZ = 'America/Los_Angeles';
@@ -49,6 +51,7 @@ const CATEGORY_ORDER: AsanaCategory[] = [
 ];
 
 function AsanaCard({ asana }: { asana: Asana }) {
+  const videoId = asana.referenceUrl ? parseYouTubeId(asana.referenceUrl) : null;
   return (
     <article className="block rounded-2xl border border-violet-200 bg-white p-5 shadow-sm transition hover:border-violet-400">
       <div className="flex items-start justify-between gap-3">
@@ -66,9 +69,39 @@ function AsanaCard({ asana }: { asana: Asana }) {
           {asana.level}
         </span>
       </div>
+      {videoId ? (
+        <div className="mt-3 aspect-video overflow-hidden rounded-xl bg-black">
+          <iframe
+            src={toEmbedUrl(videoId)}
+            title={`${asana.name} reference video`}
+            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            referrerPolicy="strict-origin-when-cross-origin"
+            sandbox="allow-scripts allow-same-origin allow-presentation"
+            className="h-full w-full"
+          />
+        </div>
+      ) : null}
       {asana.description ? (
         <p className="mt-2 line-clamp-2 text-sm text-violet-900/70">{asana.description}</p>
       ) : null}
+      <details className="mt-3 group">
+        <summary className="flex cursor-pointer items-center justify-between text-xs font-medium text-violet-700 hover:text-violet-900">
+          <span>{videoId ? 'Change video' : '🎥 Add a demo video'}</span>
+          <a
+            href={youtubeSearchUrlFor(`${asana.name} yoga pose tutorial`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="font-medium underline-offset-2 hover:underline"
+          >
+            Search YouTube ↗
+          </a>
+        </summary>
+        <div className="mt-3">
+          <AsanaReferenceUrlForm asanaId={asana.id} initialUrl={asana.referenceUrl} />
+        </div>
+      </details>
       {asana.focus.length > 0 ? (
         <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Focus">
           {asana.focus.slice(0, 3).map((tag) => (

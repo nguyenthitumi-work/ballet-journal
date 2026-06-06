@@ -8,6 +8,8 @@ import { finishFlowSession, recordHold } from '../actions';
 import VideoRecorder, { type RecordedClip } from '@/app/practice/_components/VideoRecorder';
 import { attachVideoToAttempt } from '@/app/practice/actions';
 import { buildVideoPath, uploadVideoBlob, deleteVideoBlob } from '@/lib/storage/videos';
+import { parseYouTubeId, toEmbedUrl, youtubeSearchUrlFor } from '@/lib/youtube';
+import PracticeMusic from './PracticeMusic';
 
 export interface PlayerStep {
   asanaId: string;
@@ -17,6 +19,7 @@ export interface PlayerStep {
   side: FlowSide;
   holdSeconds: number;
   breathCue: string | null;
+  referenceUrl: string | null;
 }
 
 interface Props {
@@ -282,6 +285,7 @@ export default function FlowPlayer({ sessionId, userId, flowName, steps }: Props
   const step = steps[index];
   const pct = step.holdSeconds > 0 ? (secondsLeft / step.holdSeconds) * 100 : 0;
   const side = sideLabel(step.side);
+  const videoId = step.referenceUrl ? parseYouTubeId(step.referenceUrl) : null;
   const progressPct =
     ((index + (1 - secondsLeft / Math.max(1, step.holdSeconds))) / steps.length) * 100;
 
@@ -303,6 +307,8 @@ export default function FlowPlayer({ sessionId, userId, flowName, steps }: Props
         <div className="h-full bg-violet-400 transition-all" style={{ width: `${progressPct}%` }} />
       </div>
 
+      <PracticeMusic />
+
       <div className={`${CARD} flex flex-col items-center gap-4 text-center`}>
         <div className="flex flex-col items-center gap-1">
           <h2 className="text-2xl font-semibold tracking-tight text-violet-900">{step.name}</h2>
@@ -315,6 +321,29 @@ export default function FlowPlayer({ sessionId, userId, flowName, steps }: Props
             </span>
           ) : null}
         </div>
+
+        {videoId ? (
+          <div className="aspect-video w-full overflow-hidden rounded-xl bg-black">
+            <iframe
+              src={toEmbedUrl(videoId)}
+              title={`${step.name} demonstration video`}
+              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              referrerPolicy="strict-origin-when-cross-origin"
+              sandbox="allow-scripts allow-same-origin allow-presentation"
+              className="h-full w-full"
+            />
+          </div>
+        ) : (
+          <a
+            href={youtubeSearchUrlFor(`${step.name} yoga pose tutorial`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-medium text-violet-700 underline-offset-2 hover:underline"
+          >
+            No demo video yet — search YouTube ↗
+          </a>
+        )}
 
         <div
           className="relative flex h-44 w-44 items-center justify-center rounded-full"
